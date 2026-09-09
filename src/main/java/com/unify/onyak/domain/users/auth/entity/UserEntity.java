@@ -39,7 +39,7 @@ public class UserEntity {
 
     private Integer age;
 
-    private Float weight;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 1)
