@@ -1,7 +1,7 @@
 package com.unify.onyak.domain.wards.auth.entity;
 
-import com.unify.onyak.domain.auth.users.entity.Gender;
-import com.unify.onyak.domain.auth.users.entity.UserEntity;
+import com.unify.onyak.domain.users.auth.entity.Gender;
+import com.unify.onyak.domain.users.auth.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
