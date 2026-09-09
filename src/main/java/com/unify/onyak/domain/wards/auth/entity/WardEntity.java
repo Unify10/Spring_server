@@ -1,4 +1,4 @@
-package com.unify.onyak.domain.auth.ward.entity;
+package com.unify.onyak.domain.wards.auth.entity;
 
 import com.unify.onyak.domain.auth.users.entity.Gender;
 import com.unify.onyak.domain.auth.users.entity.UserEntity;
