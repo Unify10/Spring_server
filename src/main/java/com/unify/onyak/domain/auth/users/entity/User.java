@@ -1,25 +1,22 @@
 package com.unify.onyak.domain.auth.users.entity;
 
+import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.OffsetDateTime;
-
+import lombok.*;
 
 @Entity
+@Builder
+@AllArgsConstructor
+@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserEntity {
+public class User extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false,unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "password_hash")
@@ -34,7 +31,8 @@ public class UserEntity {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @Column(name = "email_verified",nullable = false)
+    @Builder.Default
+    @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
     private Integer age;
@@ -48,18 +46,11 @@ public class UserEntity {
     @Column(name = "is_pregnant")
     private Boolean isPregnant;
 
-    @Column(name = "medication_push_enabled",nullable = false)
+    @Builder.Default
+    @Column(name = "medication_push_enabled", nullable = false)
     private Boolean medicationPushEnabled = true;
 
-    @Column(name = "sos_push_enabled",nullable = false)
+    @Builder.Default
+    @Column(name = "sos_push_enabled", nullable = false)
     private Boolean sosPushEnabled = true;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
 }
