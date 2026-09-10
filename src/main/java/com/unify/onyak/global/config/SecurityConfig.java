@@ -1,12 +1,17 @@
 package com.unify.onyak.global.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -14,15 +19,40 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    public CorsConfigurationSource CorsConfigurationSource() {
+
+        return request -> {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173")); // 허용할 도메인
+            configuration.setAllowedMethods(Collections.singletonList("*")); // 모든 HTTP 메서드 허용
+            configuration.setAllowCredentials(true); // 인증 정보 포함 허용
+            configuration.setAllowedHeaders(Collections.singletonList("*")); // 모든 헤더 허용
+            configuration.setExposedHeaders(Collections.singletonList("Authorization")); // Authorization 헤더 노출
+            configuration.setMaxAge(3600L); // 1시간 동안 캐싱
+
+            return configuration;
+        };
+    }
+    @Bean
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults())
-                .formLogin(Customizer.withDefaults())
+        http
+                .cors(cors -> cors.configurationSource(CorsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable())// form login 비활성화
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/**")// /api/auth/** 이외 메서드 전부 인증 필요
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
                 );
 
         return http.build();
+    }
+
+    @Bean
+    BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
