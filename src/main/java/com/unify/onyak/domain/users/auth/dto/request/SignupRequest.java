@@ -1,4 +1,4 @@
-package com.unify.onyak.domain.auth.users.dto.request;
+package com.unify.onyak.domain.users.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

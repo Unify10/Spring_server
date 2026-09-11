@@ -1,6 +1,6 @@
-package com.unify.onyak.domain.auth.users.repository;
+package com.unify.onyak.domain.users.auth.repository;
 
-import com.unify.onyak.domain.auth.users.entity.User;
+import com.unify.onyak.domain.users.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

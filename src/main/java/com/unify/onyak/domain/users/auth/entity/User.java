@@ -1,4 +1,4 @@
-package com.unify.onyak.domain.auth.users.entity;
+package com.unify.onyak.domain.users.auth.entity;
 
 import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
