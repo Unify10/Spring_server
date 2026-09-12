@@ -1,22 +1,25 @@
 package com.unify.onyak.domain.users.auth.entity;
 
-import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.OffsetDateTime;
+
 
 @Entity
-@Builder
-@AllArgsConstructor
-@Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseTimeEntity {
+public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false,unique = true)
     private String email;
 
     @Column(name = "password_hash")
@@ -31,13 +34,12 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @Builder.Default
-    @Column(name = "email_verified", nullable = false)
+    @Column(name = "email_verified",nullable = false)
     private Boolean emailVerified = false;
 
     private Integer age;
 
-    private Float weight;
+    private double weight;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 1)
@@ -46,11 +48,18 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_pregnant")
     private Boolean isPregnant;
 
-    @Builder.Default
-    @Column(name = "medication_push_enabled", nullable = false)
+    @Column(name = "medication_push_enabled",nullable = false)
     private Boolean medicationPushEnabled = true;
 
-    @Builder.Default
-    @Column(name = "sos_push_enabled", nullable = false)
+    @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
 }
