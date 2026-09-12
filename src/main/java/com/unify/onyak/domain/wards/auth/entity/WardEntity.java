@@ -1,30 +1,29 @@
 package com.unify.onyak.domain.wards.auth.entity;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
-import com.unify.onyak.domain.users.auth.entity.UserEntity;
+import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.OffsetDateTime;
 import java.util.Date;
 
 @Entity
+@Table(name = "wards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WardEntity {
+public class WardEntity extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guardian_id", nullable = false)
-    private UserEntity guardianId;
+    private User guardianId;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -50,13 +49,4 @@ public class WardEntity {
 
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
 }
