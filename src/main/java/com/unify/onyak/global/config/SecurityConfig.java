@@ -1,12 +1,12 @@
 package com.unify.onyak.global.config;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -15,15 +15,17 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
+    @Value("${cors.allowed-origin}")
+    private String allowedOrigin;
+
     @Bean
-    public CorsConfigurationSource CorsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
         return request -> {
             CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(Collections.singletonList("http://localhost:5173")); // 허용할 도메인
+            configuration.setAllowedOrigins(Collections.singletonList(allowedOrigin)); // 허용할 도메인
             configuration.setAllowedMethods(Collections.singletonList("*")); // 모든 HTTP 메서드 허용
             configuration.setAllowCredentials(true); // 인증 정보 포함 허용
             configuration.setAllowedHeaders(Collections.singletonList("*")); // 모든 헤더 허용
@@ -37,12 +39,12 @@ public class SecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> cors.configurationSource(CorsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable())// form login 비활성화
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**")// /api/auth/** 이외 메서드 전부 인증 필요
+                        .requestMatchers("/auth/**")// /api/auth/** 이외 메서드 전부 인증 필요
                         .permitAll()
                         .anyRequest()
                         .authenticated()
@@ -52,7 +54,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    BCryptPasswordEncoder bCryptPasswordEncoder() {
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
