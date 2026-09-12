@@ -1,7 +1,7 @@
 package com.unify.onyak.domain.wards.auth.entity;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
-import com.unify.onyak.domain.users.auth.entity.UserEntity;
+import com.unify.onyak.domain.users.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class WardEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guardian_id", nullable = false)
-    private UserEntity guardianId;
+    private User guardianId;
 
     @Column(nullable = false, length = 100)
     private String name;
