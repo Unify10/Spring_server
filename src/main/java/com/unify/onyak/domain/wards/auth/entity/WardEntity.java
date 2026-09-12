@@ -49,5 +49,4 @@ public class WardEntity extends BaseTimeEntity {
 
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
-
 }
