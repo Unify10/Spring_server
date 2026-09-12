@@ -14,7 +14,7 @@ import java.util.Date;
 @Table(name = "wards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WardEntity extends BaseTimeEntity {
+public class Ward extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
