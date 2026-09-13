@@ -14,3 +14,12 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+cors:
+  allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+jwt:
+  # openssl rand -base64 64 사용
+  secret: ${JWT_SECRET}
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000
