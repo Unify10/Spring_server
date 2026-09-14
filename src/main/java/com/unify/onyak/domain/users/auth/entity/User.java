@@ -4,8 +4,9 @@ import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
-@Builder
 @AllArgsConstructor
 @Table(name = "users")
 @Getter
@@ -31,13 +32,15 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String phone;
 
-    @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
 
-    private Integer age;
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     private Float weight;
+
+    private Float height;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 1)
@@ -46,11 +49,30 @@ public class User extends BaseTimeEntity {
     @Column(name = "is_pregnant")
     private Boolean isPregnant;
 
-    @Builder.Default
     @Column(name = "medication_push_enabled", nullable = false)
     private Boolean medicationPushEnabled = true;
 
-    @Builder.Default
     @Column(name = "sos_push_enabled", nullable = false)
     private Boolean sosPushEnabled = true;
+
+    public static User createLocal(String email, String passwordHash, String name, String phone,
+                                    LocalDate birthDate, Float weight, Float height, Gender gender,
+                                    Boolean medicationPushEnabled, Boolean sosPushEnabled) {
+        return new User(
+                null,
+                email,
+                passwordHash,
+                null,
+                name,
+                phone,
+                false,
+                birthDate,
+                weight,
+                height,
+                gender,
+                null,
+                medicationPushEnabled,
+                sosPushEnabled
+        );
+    }
 }
