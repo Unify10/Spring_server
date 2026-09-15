@@ -23,3 +23,9 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity-in-milliseconds: 3600000
   refresh-token-validity-in-milliseconds: 1209600000
+app:
+  info:
+    version: "1.0.0"
+    notice-url: "https://onyak.app/notice"
+    terms-url: "https://onyak.app/terms"
+    privacy-url: "https://onyak.app/privacy"
