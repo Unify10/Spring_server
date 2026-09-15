@@ -60,7 +60,7 @@ public class Ward extends BaseTimeEntity {
                             Boolean sosPushEnabled){
         return new Ward(
                 null,
-                guardianId,
+                null,
                 name,
                 birthDate,
                 weight,
