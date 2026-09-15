@@ -2,8 +2,10 @@ package com.unify.onyak.domain.wards.auth.entity;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,9 +15,11 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 
 @Entity
+@AllArgsConstructor
+@Table(name = "wards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WardEntity {
+public class Ward extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -33,10 +37,10 @@ public class WardEntity {
     private Date birthDate;
 
     @Column(nullable = false)
-    private double weight;
+    private Float weight;
 
     @Column(nullable = false)
-    private double height;
+    private Float height;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,12 +55,20 @@ public class WardEntity {
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
+    public static Ward createLocal(User guardianId, String name, Date birthDate, Float weight, Float height,
+                            Gender gender, Boolean isPregnant, Boolean medicationPushEnabled,
+                            Boolean sosPushEnabled){
+        return new Ward(
+                null,
+                guardianId,
+                name,
+                birthDate,
+                weight,
+                height,
+                gender,
+                isPregnant,
+                medicationPushEnabled,
+                sosPushEnabled
+        );
+    }
 }
