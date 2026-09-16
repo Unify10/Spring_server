@@ -8,13 +8,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AppServiceImpl implements AppService
-{
+public class AppServiceImpl implements AppService {
     private final AppInfoProperties appInfoProperties;
 
     @Override
-    public AppInfoResponse getAppInfo()
-    {
+    public AppInfoResponse getAppInfo() {
         return AppInfoResponse.builder()
                 .version(appInfoProperties.version())
                 .noticeUrl(appInfoProperties.noticeUrl())
