@@ -44,6 +44,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(form -> form.disable())// form login 비활성화
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/auth/logout").authenticated() // /auth/** 보다 먼저 선언해야 적용됨
                         .requestMatchers("/auth/**", "/app/info")// /auth/** 이외 메서드 전부 인증 필요
                         .permitAll()
                         .anyRequest()
