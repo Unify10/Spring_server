@@ -2,24 +2,26 @@ package com.unify.onyak.domain.notifications.service;
 
 import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.entity.Notification;
+import com.unify.onyak.domain.notifications.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.notifications.repository.NotificationRepository;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 
 @Service
 @RequiredArgsConstructor
 public class SosService {
 
     private final NotificationRepository notificationRepository;
-    private final WardRepository wardRepository; // 윤범이가 작업해야하지만 내가 작업함
+    private final WardRepository wardRepository;
     // private final PushNotificationService pushNotificationService; // TODO: FCM 푸시 연동 시 사용
 
     @Transactional
     public void sendSos(Long wardId, SosRequest request) {
         Ward ward = wardRepository.findById(wardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 피보호자를 찾을 수 없습니다."));
+                .orElseThrow(WardNotFoundException::new);
 
         Long guardianId = ward.getGuardianId().getId();
         String message = ward.getName() + "님의 긴급 SOS 요청이 발생했습니다.";
