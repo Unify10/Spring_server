@@ -16,6 +16,21 @@ spring:
     show-sql: true
   jackson:
     property-naming-strategy: SNAKE_CASE
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 cors:
   allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
 jwt:
@@ -23,3 +38,9 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-validity-in-milliseconds: 3600000
   refresh-token-validity-in-milliseconds: 1209600000
+app:
+  info:
+    version: "1.0.0"
+    notice-url: "https://onyak.app/notice"
+    terms-url: "https://onyak.app/terms"
+    privacy-url: "https://onyak.app/privacy"

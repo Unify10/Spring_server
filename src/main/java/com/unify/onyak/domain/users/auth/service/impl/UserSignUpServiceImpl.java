@@ -29,6 +29,9 @@ public class UserSignUpServiceImpl implements UserSignUpService {
         // 이메일 중복 검사
         userValidationPolicy.validateDuplicateEmail(request.email());
 
+        // 이메일 인증 완료 여부 검사
+        userValidationPolicy.validateEmailVerified(request.email());
+
         String password = passwordEncoder.encode(request.password());
 
         User user = User.createLocal(
