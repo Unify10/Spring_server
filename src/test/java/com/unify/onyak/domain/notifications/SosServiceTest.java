@@ -7,6 +7,7 @@ import com.unify.onyak.domain.notifications.entity.RecipientType;
 import com.unify.onyak.domain.notifications.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.notifications.repository.NotificationRepository;
 import com.unify.onyak.domain.notifications.service.SosService;
+import com.unify.onyak.domain.notifications.service.impl.SosServiceImpl;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
@@ -30,7 +31,7 @@ class SosServiceTest {
     void setUp() {
         notificationRepository = mock(NotificationRepository.class);
         wardRepository = mock(WardRepository.class);
-        sosService = new SosService(notificationRepository, wardRepository);
+        sosService = new SosServiceImpl(wardRepository, notificationRepository);
     }
 
     @Test
