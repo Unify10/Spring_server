@@ -4,19 +4,19 @@ import com.unify.onyak.domain.users.auth.controller.AuthController;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
+import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
+import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.service.impl.AuthServiceImpl;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Set;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -45,15 +45,17 @@ class LogoutTest {
         mockMvc.perform(post("/auth/logout")
                         .with(authentication(new UsernamePasswordAuthenticationToken(ward, null, ward.getAuthorities()))))
                 .andExpect(status().isNoContent());
-        verify(authService).logout(7L, "WARD");
+        verify(authService).logout(7L);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    void 서비스는_역할별_키만_삭제한다() {
-        RedisTemplate<String, String> redis = mock(RedisTemplate.class);
-        when(redis.keys("refresh:GUARDIAN:3:*")).thenReturn(Set.of("refresh:GUARDIAN:3:a"));
-        new AuthServiceImpl(redis).logout(3L, "GUARDIAN");
-        verify(redis).delete(Set.of("refresh:GUARDIAN:3:a"));
+    void 서비스는_사용자의_refresh_token만_삭제한다() {
+        JwtProvider jwtProvider = mock(JwtProvider.class);
+        UserValidationPolicy userValidationPolicy = mock(UserValidationPolicy.class);
+        RefreshTokenRepository refreshTokenRepository = mock(RefreshTokenRepository.class);
+
+        new AuthServiceImpl(jwtProvider, userValidationPolicy, refreshTokenRepository).logout(3L);
+
+        verify(refreshTokenRepository).deleteById(3L);
     }
 }

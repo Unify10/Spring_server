@@ -1,18 +1,22 @@
 package com.unify.onyak.domain.users.auth.policy;
 
 import com.unify.onyak.domain.users.auth.entity.EmailVerification;
+import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.error.exception.DuplicateEmailException;
 import com.unify.onyak.domain.users.auth.error.exception.EmailNotVerifiedException;
+import com.unify.onyak.domain.users.auth.error.exception.LoginFailedException;
 import com.unify.onyak.domain.users.auth.error.exception.PasswordMismatchException;
 import com.unify.onyak.domain.users.auth.repository.EmailVerificationRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
 public class UserValidationPolicy {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private final EmailVerificationRepository emailVerificationRepository;
 
@@ -43,4 +47,17 @@ public class UserValidationPolicy {
             throw new EmailNotVerifiedException();
         }
     }
+
+    public User validateLogin(String email, String password) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(LoginFailedException::new);
+
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new LoginFailedException();
+        }
+
+        return user;
+    }
+
 }
