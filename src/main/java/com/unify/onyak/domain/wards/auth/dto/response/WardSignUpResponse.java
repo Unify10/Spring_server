@@ -1,6 +1,6 @@
 package com.unify.onyak.domain.wards.auth.dto.response;
 
-public record SignUpResponse(
+public record WardSignUpResponse(
         Long wardId,
 
         String name
