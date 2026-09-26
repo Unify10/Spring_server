@@ -1,0 +1,25 @@
+package com.unify.onyak.domain.wards.auth.service.impl;
+
+import com.unify.onyak.domain.users.auth.repository.UserRepository;
+import com.unify.onyak.domain.wards.auth.dto.request.WardSignUpRequest;
+import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
+import com.unify.onyak.domain.wards.auth.repository.WardRepository;
+import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@RequiredArgsConstructor
+@Service
+public class WardSignUpServiceImpl implements WardSignUpService {
+
+    private final WardRepository wardRepository;
+    private final UserRepository userRepository;
+
+    @Transactional
+    @Override
+    public WardSignUpResponse signUp(WardSignUpRequest request){
+
+    }
+
+}
