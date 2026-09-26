@@ -6,33 +6,33 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.Date;
 
-public class SignUpRequest {
+public record SignUpRequest(@NotBlank
 
-    @NotBlank
-    User guardianId;
+        @NotBlank
+        User guardianId,
 
-    @NotBlank
-    String name;
+        @NotBlank
+        String name,
 
-    @NotBlank
-    Date birthDate;
+        @NotBlank
+        Date birthDate,
 
-    @NotBlank
-    Float weight;
+        @NotBlank
+        Float weight,
 
-    @NotBlank
-    Float height;
+        @NotBlank
+        Float height,
 
-    @NotBlank
-    Gender gender;
+        @NotBlank
+        Gender gender,
 
-    @NotBlank
-    boolean isPregnant;
+        @NotBlank
+        boolean isPregnant,
 
-    @NotBlank
-    boolean medicationPushEnabled;
+        @NotBlank
+        boolean medicationPushEnabled,
 
-    @NotBlank
-    boolean sosPushEnabled;
-
+        @NotBlank
+        boolean sosPushEnabled
+){
 }
