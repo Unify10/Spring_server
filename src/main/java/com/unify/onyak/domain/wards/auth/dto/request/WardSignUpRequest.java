@@ -11,28 +11,28 @@ public record WardSignUpRequest(@NotBlank
         @NotBlank
         User guardianId,
 
-                                @NotBlank
+        @NotBlank
         String name,
 
-                                @NotBlank
+        @NotBlank
         Date birthDate,
 
-                                @NotBlank
+        @NotBlank
         Float weight,
 
-                                @NotBlank
+        @NotBlank
         Float height,
 
-                                @NotBlank
+        @NotBlank
         Gender gender,
 
-                                @NotBlank
+        @NotBlank
         boolean isPregnant,
 
-                                @NotBlank
+        @NotBlank
         boolean medicationPushEnabled,
 
-                                @NotBlank
+        @NotBlank
         boolean sosPushEnabled
 ){
 }
