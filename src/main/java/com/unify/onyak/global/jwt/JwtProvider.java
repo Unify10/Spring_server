@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Getter
 @Component
@@ -49,6 +50,7 @@ public class JwtProvider {
         Date expirationTime = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString()) // 같은 초에 발급해도 토큰이 달라지도록 jti 부여
                 .subject(String.valueOf(userId))
                 .claim("type", type)
                 .claim("role", role.name())
