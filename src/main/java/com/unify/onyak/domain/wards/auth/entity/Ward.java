@@ -52,7 +52,7 @@ public class Ward extends BaseTimeEntity {
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
 
-    public static Ward createLocal(User guardianId, String name, Date birthDate, Float weight, Float height,
+    public static Ward createLocal(long guardianId, String name, Date birthDate, Float weight, Float height,
                             Gender gender, Boolean isPregnant, Boolean medicationPushEnabled,
                             Boolean sosPushEnabled){
         return new Ward(
