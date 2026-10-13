@@ -2,9 +2,6 @@ package com.unify.onyak.domain.wards.auth.entity;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
-import com.unify.onyak.domain.users.auth.repository.UserRepository;
-import com.unify.onyak.domain.wards.auth.dto.request.WardSignUpRequest;
-import com.unify.onyak.domain.wards.auth.policy.WardValidationPolicy;
 import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
