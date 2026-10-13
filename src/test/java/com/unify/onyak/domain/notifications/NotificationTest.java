@@ -3,6 +3,7 @@ package com.unify.onyak.domain.notifications;
 import com.unify.onyak.domain.notifications.controller.NotificationController;
 import com.unify.onyak.domain.notifications.dto.response.NotificationResponse;
 import com.unify.onyak.domain.notifications.entity.NotificationType;
+import com.unify.onyak.domain.notifications.entity.RecipientType;
 import com.unify.onyak.domain.notifications.service.NotificationService;
 import com.unify.onyak.global.config.SecurityConfig;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -24,11 +25,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
+import com.unify.onyak.global.jwt.JwtProvider;
+
 @WebMvcTest(NotificationController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class NotificationTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProvider;
     @MockitoBean NotificationService notificationService;
 
     @Test
@@ -42,7 +47,7 @@ class NotificationTest {
     @Test
     void 인증된_보호자는_본인_알림_목록을_조회한다() throws Exception {
         CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
-        when(notificationService.getNotifications(3L, "GUARDIAN")).thenReturn(List.of(
+        when(notificationService.getNotifications(3L, RecipientType.GUARDIAN)).thenReturn(List.of(
                 new NotificationResponse(1L, NotificationType.SOS, "철수님의 긴급 SOS 요청이 발생했습니다.",
                         37.5, 127.0, false, OffsetDateTime.now())
         ));
@@ -54,6 +59,16 @@ class NotificationTest {
                 .andExpect(jsonPath("$.data[0].type").value("SOS"))
                 .andExpect(jsonPath("$.data[0].is_read").value(false));
 
-        verify(notificationService).getNotifications(3L, "GUARDIAN");
+        verify(notificationService).getNotifications(3L, RecipientType.GUARDIAN);
+    }
+
+    @Test
+    void 알수없는_역할이면_403을_반환한다() throws Exception {
+        CustomUserDetails unknown = new CustomUserDetails(3L, "a@a.com", null, "ROLE_ADMIN");
+
+        mockMvc.perform(get("/notifications")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                unknown, null, unknown.getAuthorities()))))
+                .andExpect(status().isForbidden());
     }
 }
