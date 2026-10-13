@@ -4,6 +4,8 @@ import com.unify.onyak.domain.notifications.controller.SosController;
 import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.service.SosService;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
+import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +24,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SosController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class SosTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProvider;
     @MockitoBean SosService sosService;
 
     @Test
