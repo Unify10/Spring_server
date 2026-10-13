@@ -18,8 +18,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(Long userId, String role) {
-        RecipientType recipientType = RecipientType.valueOf(role);
+    public List<NotificationResponse> getNotifications(Long userId, RecipientType recipientType) {
         return notificationRepository
                 .findByRecipientTypeAndRecipientIdOrderByCreatedAtDesc(recipientType, userId)
                 .stream()

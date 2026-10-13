@@ -1,6 +1,7 @@
 package com.unify.onyak.domain.notifications.controller;
 
 import com.unify.onyak.domain.notifications.dto.response.NotificationResponse;
+import com.unify.onyak.domain.notifications.entity.RecipientType;
 import com.unify.onyak.domain.notifications.service.NotificationService;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -22,7 +23,10 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         return ApiResponse.ok(
-                notificationService.getNotifications(userDetails.getUserId(), userDetails.getRoleName())
+                notificationService.getNotifications(
+                        userDetails.getUserId(),
+                        RecipientType.from(userDetails.getRoleName())
+                )
         );
     }
 }
