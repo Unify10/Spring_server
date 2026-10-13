@@ -45,9 +45,9 @@ class JwtAuthenticationFilterTest {
         String token = jwtProvider.generateAccessToken(7L, Role.WARD);
 
         mockMvc.perform(post("/auth/logout").header("Authorization", BEARER + token))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
-        verify(authService).logout(7L);
+        verify(authService).logout(7L, Role.WARD);
     }
 
     @Test
