@@ -32,7 +32,8 @@ class NotificationServiceTest {
         when(notificationRepository.findByRecipientTypeAndRecipientIdOrderByCreatedAtDesc(
                 RecipientType.GUARDIAN, 3L)).thenReturn(List.of(sos));
 
-        List<NotificationResponse> result = notificationService.getNotifications(3L, RecipientType.GUARDIAN);;
+        List<NotificationResponse> result = notificationService.getNotifications(3L, RecipientType.GUARDIAN);
+
         assertEquals(1, result.size());
         assertEquals(NotificationType.SOS, result.get(0).type());
         assertEquals(37.5, result.get(0).locationLat());

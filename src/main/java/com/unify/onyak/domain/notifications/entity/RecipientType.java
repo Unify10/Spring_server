@@ -6,9 +6,13 @@ public enum RecipientType {
     GUARDIAN, WARD;
 
     public static RecipientType from(String role) {
+        if (role == null) {
+            throw new InvalidRecipientRoleException();
+        }
+
         try {
             return RecipientType.valueOf(role);
-        } catch (IllegalArgumentException | NullPointerException e) {
+        } catch (IllegalArgumentException e) {
             throw new InvalidRecipientRoleException();
         }
     }

@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -40,7 +40,7 @@ class NotificationTest {
     void 미인증_요청은_거부된다() throws Exception {
         int status = mockMvc.perform(get("/notifications"))
                 .andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        assertEquals(401, status);
         verifyNoInteractions(notificationService);
     }
 

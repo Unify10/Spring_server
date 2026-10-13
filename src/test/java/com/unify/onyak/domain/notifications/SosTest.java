@@ -36,7 +36,7 @@ class SosTest {
                         .contentType("application/json")
                         .content("{}"))
                 .andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        assertEquals(401, status);
         verifyNoInteractions(sosService);
     }
 

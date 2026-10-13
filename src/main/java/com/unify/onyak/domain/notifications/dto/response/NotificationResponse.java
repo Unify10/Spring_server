@@ -23,17 +23,11 @@ public record NotificationResponse(
     public static NotificationResponse from(Notification n) {
         return new NotificationResponse(
                 n.getId(),
-
                 n.getType(),
-
                 n.getMessage(),
-
                 n.getLocationLat(),
-
                 n.getLocationLng(),
-
                 n.getIsRead(),
-
                 n.getCreatedAt()
         );
     }
