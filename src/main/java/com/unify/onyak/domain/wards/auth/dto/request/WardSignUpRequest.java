@@ -9,7 +9,7 @@ import java.util.Date;
 public record WardSignUpRequest(@NotBlank
 
         @NotBlank
-        User guardianId,
+        long guardianId,
 
         @NotBlank
         String name,
