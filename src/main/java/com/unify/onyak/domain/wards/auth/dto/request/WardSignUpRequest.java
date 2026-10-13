@@ -7,10 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
-public record WardSignUpRequest(@NotBlank
-
-        @NotNull
-        long guardianId,
+public record WardSignUpRequest(
 
         @NotBlank
         String name,
