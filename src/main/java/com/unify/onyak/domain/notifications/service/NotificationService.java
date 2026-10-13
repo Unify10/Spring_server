@@ -6,5 +6,5 @@ import com.unify.onyak.domain.notifications.entity.RecipientType;
 import java.util.List;
 
 public interface NotificationService {
-    List<NotificationResponse> getNotifications(Long userId, RecipientType recipientType);
+    List<NotificationResponse> getNotifications(Long userId, RecipientType recipientType, int page, int size);
 }

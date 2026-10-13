@@ -4,6 +4,7 @@ import com.unify.onyak.domain.notifications.controller.NotificationController;
 import com.unify.onyak.domain.notifications.dto.response.NotificationResponse;
 import com.unify.onyak.domain.notifications.entity.NotificationType;
 import com.unify.onyak.domain.notifications.entity.RecipientType;
+import com.unify.onyak.domain.notifications.error.exception.InvalidPageRequestException;
 import com.unify.onyak.domain.notifications.service.NotificationService;
 import com.unify.onyak.global.config.SecurityConfig;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -47,7 +48,7 @@ class NotificationTest {
     @Test
     void 인증된_보호자는_본인_알림_목록을_조회한다() throws Exception {
         CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
-        when(notificationService.getNotifications(3L, RecipientType.GUARDIAN)).thenReturn(List.of(
+        when(notificationService.getNotifications(3L, RecipientType.GUARDIAN, 0, 20)).thenReturn(List.of(
                 new NotificationResponse(1L, NotificationType.SOS, "철수님의 긴급 SOS 요청이 발생했습니다.",
                         37.5, 127.0, false, OffsetDateTime.now())
         ));
@@ -59,7 +60,37 @@ class NotificationTest {
                 .andExpect(jsonPath("$.data[0].type").value("SOS"))
                 .andExpect(jsonPath("$.data[0].is_read").value(false));
 
-        verify(notificationService).getNotifications(3L, RecipientType.GUARDIAN);
+        verify(notificationService).getNotifications(3L, RecipientType.GUARDIAN, 0, 20);
+    }
+
+    @Test
+    void page와_size를_지정하면_그대로_서비스에_전달한다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        when(notificationService.getNotifications(3L, RecipientType.GUARDIAN, 1, 5)).thenReturn(List.of());
+
+        mockMvc.perform(get("/notifications")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray());
+
+        verify(notificationService).getNotifications(3L, RecipientType.GUARDIAN, 1, 5);
+    }
+
+    @Test
+    void 잘못된_페이지_요청이면_400을_반환한다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        when(notificationService.getNotifications(3L, RecipientType.GUARDIAN, 0, 101))
+                .thenThrow(new InvalidPageRequestException());
+
+        mockMvc.perform(get("/notifications")
+                        .param("size", "101")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("INVALID_PAGE_REQUEST"));
     }
 
     @Test
