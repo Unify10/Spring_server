@@ -37,6 +37,8 @@ public record SignUpRequest(
 
         boolean medicationPushEnabled,
 
-        boolean sosPushEnabled
+        boolean sosPushEnabled,
+
+        boolean marketingPushEnabled
 ) {
 }
