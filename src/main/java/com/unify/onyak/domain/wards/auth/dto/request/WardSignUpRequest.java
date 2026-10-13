@@ -3,36 +3,37 @@ package com.unify.onyak.domain.wards.auth.dto.request;
 import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
 public record WardSignUpRequest(@NotBlank
 
-        @NotBlank
+        @NotNull
         long guardianId,
 
         @NotBlank
         String name,
 
-        @NotBlank
+        @NotNull
         Date birthDate,
 
-        @NotBlank
+        @NotNull
         Float weight,
 
-        @NotBlank
+        @NotNull
         Float height,
 
-        @NotBlank
+        @NotNull
         Gender gender,
 
-        @NotBlank
+        @NotNull
         boolean isPregnant,
 
-        @NotBlank
+        @NotNull
         boolean medicationPushEnabled,
 
-        @NotBlank
+        @NotNull
         boolean sosPushEnabled
 ){
 }
