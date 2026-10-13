@@ -59,11 +59,25 @@ public class JwtProvider {
     }
 
     public Long getUserId(String token) {
-        return Long.parseLong(parseClaims(token).getSubject());
+        try {
+            return Long.parseLong(parseClaims(token).getSubject());
+        } catch (NumberFormatException e) {
+            throw new InvalidTokenException();
+        }
     }
 
     public Role getRole(String token) {
-        return Role.valueOf(parseClaims(token).get("role", String.class));
+        String role = parseClaims(token).get("role", String.class);
+
+        if (role == null) {
+            throw new InvalidTokenException();
+        }
+
+        try {
+            return Role.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidTokenException();
+        }
     }
 
     private Claims parseClaims(String token) {
