@@ -6,6 +6,8 @@ import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
 import com.unify.onyak.global.config.SecurityConfig;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.verify;
@@ -98,5 +103,22 @@ class JwtAuthenticationFilterTest {
                 .andReturn().getResponse().getStatus();
 
         assertNotEquals(401, status);
+    }
+
+    @Test
+    void 서명은_유효하지만_role_클레임이_잘못된_토큰이면_401이다() throws Exception {
+        String token = Jwts.builder()
+                .subject("7")
+                .claim("type", "access")
+                .claim("role", "ADMIN")
+                .expiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        mockMvc.perform(post("/auth/logout").header("Authorization", BEARER + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code").value("AUTH_INVALID_TOKEN"));
+
+        verifyNoInteractions(authService);
     }
 }
