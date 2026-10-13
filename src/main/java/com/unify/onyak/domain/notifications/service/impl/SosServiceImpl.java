@@ -1,6 +1,5 @@
 package com.unify.onyak.domain.notifications.service.impl;
 
-import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.entity.Notification;
 import com.unify.onyak.domain.notifications.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.notifications.service.SosService;
@@ -12,6 +11,7 @@ import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +32,8 @@ public class SosServiceImpl implements SosService {
         Notification sosNotification = Notification.createSos(
                 guardianId,
                 message,
-                request.getLocationLat(),
-                request.getLocationLng()
+                request.locationLat(),
+                request.locationLng()
         );
 
         notificationRepository.save(sosNotification);

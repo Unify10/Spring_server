@@ -1,7 +1,6 @@
 package com.unify.onyak.domain.notifications;
 
 import com.unify.onyak.domain.notifications.controller.SosController;
-import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.service.SosService;
 import com.unify.onyak.global.config.SecurityConfig;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -12,7 +11,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
