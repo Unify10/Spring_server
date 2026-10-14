@@ -39,7 +39,7 @@ class SosServiceTest {
         when(wardRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(WardNotFoundException.class,
-                () -> sosService.sendSos(999L, new SosRequest()));
+                () -> sosService.sendSos(999L, new SosRequest(null , null)));
 
         verifyNoInteractions(notificationRepository);
     }
@@ -55,7 +55,7 @@ class SosServiceTest {
 
         when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
 
-        SosRequest request = new SosRequest();
+        SosRequest request = new SosRequest(null, null);
         sosService.sendSos(7L, request);
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);

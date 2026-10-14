@@ -1,10 +1,12 @@
 package com.unify.onyak.domain.users.auth.service.impl;
 
 import com.unify.onyak.domain.users.auth.dto.request.LoginRequest;
+import com.unify.onyak.domain.users.auth.dto.request.RefreshRequest;
 import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
 import com.unify.onyak.domain.users.auth.entity.RefreshToken;
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.domain.users.auth.error.exception.InvalidTokenException;
 import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.service.AuthService;
@@ -23,24 +25,44 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
         User user = userValidationPolicy.validateLogin(request.email(), request.password());
-        Role role = Role.GUARDIAN;
-        String accessToken = jwtProvider.generateAccessToken(user.getId(), role);
-        String refreshToken = jwtProvider.generateRefreshToken(user.getId(), role);
 
-        RefreshToken token = new RefreshToken(
-                user.getId(),
-                role,
-                refreshToken,
-                jwtProvider.getRefreshTokenExpTime()
-        );
-
-        refreshTokenRepository.save(token);
-
-        return new LoginResponse(accessToken, refreshToken);
+        return issueTokens(user.getId(), Role.GUARDIAN);
     }
 
     @Override
-    public void logout(Long userId) {
-        refreshTokenRepository.deleteById(userId);
+    public LoginResponse refresh(RefreshRequest request) {
+        String refreshToken = request.refreshToken();
+
+        jwtProvider.validateToken(refreshToken, "refresh");
+        Long userId = jwtProvider.getUserId(refreshToken);
+        Role role = jwtProvider.getRole(refreshToken);
+
+        RefreshToken saved = refreshTokenRepository.findById(RefreshToken.keyOf(role, userId))
+                .orElseThrow(InvalidTokenException::new);
+
+        if (!saved.getRefreshToken().equals(refreshToken)) {
+            throw new InvalidTokenException();
+        }
+
+        return issueTokens(userId, role);
+    }
+
+    @Override
+    public void logout(Long userId, Role role) {
+        refreshTokenRepository.deleteById(RefreshToken.keyOf(role, userId));
+    }
+
+    private LoginResponse issueTokens(Long userId, Role role) {
+        String accessToken = jwtProvider.generateAccessToken(userId, role);
+        String refreshToken = jwtProvider.generateRefreshToken(userId, role);
+
+        refreshTokenRepository.save(new RefreshToken(
+                userId,
+                role,
+                refreshToken,
+                jwtProvider.getRefreshTokenExpTime()
+        ));
+
+        return new LoginResponse(accessToken, refreshToken);
     }
 }

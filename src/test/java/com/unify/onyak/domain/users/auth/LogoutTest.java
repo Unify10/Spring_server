@@ -1,6 +1,7 @@
 package com.unify.onyak.domain.users.auth;
 
 import com.unify.onyak.domain.users.auth.controller.AuthController;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
@@ -8,6 +9,7 @@ import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.service.impl.AuthServiceImpl;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
 import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
@@ -21,13 +23,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class LogoutTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProviderBean;
     @MockitoBean AuthService authService;
     @MockitoBean UserSignUpService userSignUpService;
     @MockitoBean EmailVerificationService emailVerificationService;
@@ -44,8 +48,9 @@ class LogoutTest {
         CustomUserDetails ward = new CustomUserDetails(7L, "code", null, "ROLE_WARD");
         mockMvc.perform(post("/auth/logout")
                         .with(authentication(new UsernamePasswordAuthenticationToken(ward, null, ward.getAuthorities()))))
-                .andExpect(status().isNoContent());
-        verify(authService).logout(7L);
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        verify(authService).logout(7L, Role.WARD);
     }
 
     @Test
@@ -54,8 +59,8 @@ class LogoutTest {
         UserValidationPolicy userValidationPolicy = mock(UserValidationPolicy.class);
         RefreshTokenRepository refreshTokenRepository = mock(RefreshTokenRepository.class);
 
-        new AuthServiceImpl(jwtProvider, userValidationPolicy, refreshTokenRepository).logout(3L);
+        new AuthServiceImpl(jwtProvider, userValidationPolicy, refreshTokenRepository).logout(3L, Role.WARD);
 
-        verify(refreshTokenRepository).deleteById(3L);
+        verify(refreshTokenRepository).deleteById("WARD:3");
     }
 }

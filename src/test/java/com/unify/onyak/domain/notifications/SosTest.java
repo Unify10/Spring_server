@@ -1,9 +1,10 @@
 package com.unify.onyak.domain.notifications;
 
 import com.unify.onyak.domain.notifications.controller.SosController;
-import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.service.SosService;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
+import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
+import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,10 +23,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SosController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class SosTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProvider;
     @MockitoBean SosService sosService;
 
     @Test
@@ -34,7 +36,7 @@ class SosTest {
                         .contentType("application/json")
                         .content("{}"))
                 .andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        assertEquals(401, status);
         verifyNoInteractions(sosService);
     }
 
