@@ -6,16 +6,19 @@ import com.unify.onyak.domain.drugs.entity.Drug;
 import com.unify.onyak.domain.drugs.error.exception.DrugApiUnavailableException;
 import com.unify.onyak.domain.drugs.repository.DrugRepository;
 import com.unify.onyak.domain.drugs.service.DrugService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 public class DrugServiceImpl implements DrugService {
 
@@ -41,7 +44,15 @@ public class DrugServiceImpl implements DrugService {
                 .orElseGet(() -> fetchAndSave(itemSeq));
     }
 
+    /**
+     * FastAPI 호출이 들어 있으므로 트랜잭션 밖에서 불러야 한다. 바깥 트랜잭션 안에서 부르면
+     * 응답을 기다리는 동안 커넥션을 쥐고, 저장(REQUIRES_NEW)이 커넥션을 하나 더 요구한다.
+     */
     private Drug fetchAndSave(String itemSeq) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            log.warn("DrugService.getOrFetch 가 트랜잭션 안에서 호출됐습니다 (itemSeq={}). "
+                    + "FastAPI 응답을 기다리는 동안 DB 커넥션을 점유합니다.", itemSeq);
+        }
         DrugDetail detail = drugApiClient.getDrug(itemSeq);
         Drug drug = Drug.create(
                 itemSeq,
@@ -53,8 +64,8 @@ public class DrugServiceImpl implements DrugService {
                 detail.caution()
         );
         try {
-            // 별도 트랜잭션으로 저장한다. 같은 약을 동시에 담아 item_seq UNIQUE 위반이 나도
-            // 바깥(약장 저장) 트랜잭션이 rollback-only 로 깨지지 않게 하기 위해서다.
+            // 저장만 짧은 트랜잭션으로 한다. 같은 약을 동시에 담아 item_seq UNIQUE 위반이 나도
+            // 호출한 쪽 트랜잭션이 rollback-only 로 깨지지 않게 REQUIRES_NEW 로 둔다.
             return newTransaction.execute(status -> drugRepository.saveAndFlush(drug));
         } catch (DataIntegrityViolationException e) {
             // 다른 요청이 먼저 저장했다 → 그걸 쓴다

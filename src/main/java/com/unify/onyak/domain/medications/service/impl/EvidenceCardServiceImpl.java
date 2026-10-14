@@ -11,14 +11,15 @@ import com.unify.onyak.domain.medications.entity.AnalysisResult;
 import com.unify.onyak.domain.medications.entity.Medication;
 import com.unify.onyak.domain.medications.policy.KoreanDate;
 import com.unify.onyak.domain.medications.policy.WardAccessValidator;
+import com.unify.onyak.domain.medications.policy.WardAccessValidator.Access;
 import com.unify.onyak.domain.medications.repository.AnalysisResultRepository;
 import com.unify.onyak.domain.medications.repository.MedicationRepository;
 import com.unify.onyak.domain.medications.service.EvidenceCardService;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.global.security.CustomUserDetails;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
@@ -35,9 +36,11 @@ import java.util.stream.Collectors;
  * DUR 판정(약별 금기·주의 + 약끼리 병용금기·성분중복)은 결정적 규칙으로 FastAPI 가 한다.
  * 이 서비스는 ① 권한 확인 ② 복용 중인 약과 환자 정보(나이·임신)를 넘기고
  * ③ 결과의 key 를 medication_id 로 되돌린 뒤 ④ 약별 스냅샷을 저장한다.
+ * <p>
+ * FastAPI 호출(최대 13초) 동안 DB 커넥션을 쥐지 않도록 메서드 전체에 트랜잭션을 걸지 않는다.
+ * 조회는 리포지토리 단위로 끝내고, analysis_results 저장만 짧은 트랜잭션으로 묶는다.
  */
 @Service
-@RequiredArgsConstructor
 public class EvidenceCardServiceImpl implements EvidenceCardService {
 
     static final String EMPTY_HEADLINE = "복용 중인 약이 없습니다.";
@@ -49,11 +52,25 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
     private final AnalysisResultRepository analysisResultRepository;
     private final DrugApiClient drugApiClient;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate transactionTemplate;
+
+    public EvidenceCardServiceImpl(WardAccessValidator wardAccessValidator,
+                                   MedicationRepository medicationRepository,
+                                   AnalysisResultRepository analysisResultRepository,
+                                   DrugApiClient drugApiClient,
+                                   ObjectMapper objectMapper,
+                                   PlatformTransactionManager transactionManager) {
+        this.wardAccessValidator = wardAccessValidator;
+        this.medicationRepository = medicationRepository;
+        this.analysisResultRepository = analysisResultRepository;
+        this.drugApiClient = drugApiClient;
+        this.objectMapper = objectMapper;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     @Override
-    @Transactional
     public EvidenceCardResponse getEvidenceCard(CustomUserDetails user, Long wardId) {
-        Ward ward = wardAccessValidator.validate(user, wardId);
+        Ward ward = wardAccessValidator.validate(user, wardId, Access.READ);
         Patient patient = new Patient(
                 KoreanDate.ageOn(ward.getBirthDate(), KoreanDate.today()),
                 ward.getIsPregnant()
@@ -67,6 +84,7 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
                     List.of(), List.of(), List.of(), DEFAULT_DISCLAIMER);
         }
 
+        // 트랜잭션 밖에서 호출한다 — 응답을 기다리는 동안 커넥션을 쥐지 않는다
         CabinetCheckResponse check = drugApiClient.cabinetCheck(toRequest(medications, patient));
         Map<String, Medication> byKey = medications.stream()
                 .collect(Collectors.toMap(EvidenceCardServiceImpl::keyOf, Function.identity()));
@@ -77,6 +95,7 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
                 .toList();
 
         List<CardMedication> cardMedications = new ArrayList<>();
+        List<AnalysisResult> snapshots = new ArrayList<>();
         for (CabinetCheckResponse.Medication result : check.medications()) {
             Medication medication = byKey.get(result.key());
             if (medication == null) {
@@ -90,7 +109,10 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
                     result.evidences(), result.findings(), result.summary(),
                     result.lookupFailed(), hasWarning);
             cardMedications.add(card);
-            analysisResultRepository.save(AnalysisResult.of(medication, hasWarning, snapshot(card, related)));
+            snapshots.add(AnalysisResult.of(medication, hasWarning, snapshot(card, related)));
+        }
+        if (!snapshots.isEmpty()) {
+            transactionTemplate.executeWithoutResult(status -> analysisResultRepository.saveAll(snapshots));
         }
 
         return new EvidenceCardResponse(

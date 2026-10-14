@@ -1,5 +1,6 @@
 package com.unify.onyak.domain.medications.policy;
 
+import com.unify.onyak.domain.medications.error.exception.MedicationWriteForbiddenException;
 import com.unify.onyak.domain.medications.error.exception.WardAccessDeniedException;
 import com.unify.onyak.domain.medications.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
@@ -10,41 +11,51 @@ import org.springframework.stereotype.Component;
 
 /**
  * 약장 API 공통 권한 검사.
- * <ul>
- *   <li>GUARDIAN: 자기가 등록한 피보호자만 (ward.guardian.id == userId)</li>
- *   <li>WARD: 자기 자신만 (토큰의 userId 가 곧 wardId — SOS 와 같은 규칙)</li>
- * </ul>
+ * <table>
+ *   <tr><th></th><th>조회 (READ)</th><th>담기·수정·삭제·일정 설정 (WRITE)</th></tr>
+ *   <tr><td>보호자</td><td>자기 피보호자</td><td>자기 피보호자</td></tr>
+ *   <tr><td>피보호자</td><td>본인</td><td>불가 (403)</td></tr>
+ * </table>
+ * 피보호자 토큰의 userId 는 곧 wardId 다 (SOS 와 같은 규칙).
  */
 @Component
 @RequiredArgsConstructor
 public class WardAccessValidator {
+
+    public enum Access { READ, WRITE }
 
     private static final String GUARDIAN = "GUARDIAN";
     private static final String WARD = "WARD";
 
     private final WardRepository wardRepository;
 
-    public Ward validate(CustomUserDetails user, Long wardId) {
+    public Ward validate(CustomUserDetails user, Long wardId, Access access) {
         Ward ward = wardRepository.findById(wardId)
                 .orElseThrow(WardNotFoundException::new);
-        check(user, ward);
+        check(user, ward, access);
         return ward;
     }
 
     /** 이미 불러온 ward 로 검사한다 (/medications/{medId} 계열). */
-    public void check(CustomUserDetails user, Ward ward) {
-        if (user == null || !canAccess(user, ward)) {
+    public void check(CustomUserDetails user, Ward ward, Access access) {
+        if (user == null) {
             throw new WardAccessDeniedException();
         }
-    }
-
-    private boolean canAccess(CustomUserDetails user, Ward ward) {
-        Long userId = user.getUserId();
-        return switch (user.getRoleName()) {
-            case GUARDIAN -> ward.getGuardianId() != null
-                    && userId.equals(ward.getGuardianId().getId());
-            case WARD -> userId.equals(ward.getId());
-            default -> false;
-        };
+        switch (user.getRoleName()) {
+            case GUARDIAN -> {
+                if (ward.getGuardianId() == null || !user.getUserId().equals(ward.getGuardianId().getId())) {
+                    throw new WardAccessDeniedException();
+                }
+            }
+            case WARD -> {
+                if (!user.getUserId().equals(ward.getId())) {
+                    throw new WardAccessDeniedException();
+                }
+                if (access == Access.WRITE) {
+                    throw new MedicationWriteForbiddenException();
+                }
+            }
+            default -> throw new WardAccessDeniedException();
+        }
     }
 }
