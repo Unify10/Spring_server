@@ -4,6 +4,7 @@ import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
 import com.unify.onyak.domain.users.profile.service.SettingEditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,12 @@ public class SettingEditServiceImpl implements SettingEditService {
     @Override
     public SettingEditResponse editSetting(Long userId, SettingEditRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(UserNotFound::new);
 
         user.updateSettings(
-                request.medicationPushEnabled(),
-                request.sosPushEnabled(),
-                request.marketingPushEnabled()
+                request.medication_push_enabled(),
+                request.sos_push_enabled(),
+                request.marketing_push_enabled()
         );
 
         return SettingEditResponse.builder()

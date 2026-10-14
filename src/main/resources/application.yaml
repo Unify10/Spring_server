@@ -15,7 +15,7 @@ spring:
         format_sql: true
     show-sql: true
   jackson:
-    default-property-naming-strategy: SNAKE_CASE
+    property-naming-strategy: SNAKE_CASE
   mail:
     host: smtp.gmail.com
     port: 587

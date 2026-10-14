@@ -43,9 +43,9 @@ public class UserSignUpServiceImpl implements UserSignUpService {
                 request.weight(),
                 request.height(),
                 request.gender(),
-                request.medicationPushEnabled(),
-                request.sosPushEnabled(),
-                request.marketingPushEnabled()
+                request.medicationPushEnabled() == null ||  request.medicationPushEnabled(),
+                request.sosPushEnabled() == null ||  request.sosPushEnabled(),
+                request.marketingPushEnabled() == null || request.marketingPushEnabled()
         );
 
         userRepository.save(user);

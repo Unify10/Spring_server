@@ -1,10 +1,7 @@
 package com.unify.onyak.domain.users.auth.dto.request;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 
@@ -35,10 +32,10 @@ public record SignUpRequest(
 
         Gender gender,
 
-        boolean medicationPushEnabled,
+        Boolean medicationPushEnabled,
 
-        boolean sosPushEnabled,
+        Boolean sosPushEnabled,
 
-        boolean marketingPushEnabled
+        Boolean marketingPushEnabled
 ) {
 }
