@@ -21,6 +21,7 @@ import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.PlatformTransactionManager;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
@@ -42,6 +43,7 @@ class EvidenceCardServiceImplTest {
     MedicationRepository medicationRepository;
     AnalysisResultRepository analysisResultRepository;
     DrugApiClient drugApiClient;
+    PlatformTransactionManager transactionManager;
     EvidenceCardServiceImpl service;
 
     Ward ward;
@@ -55,8 +57,9 @@ class EvidenceCardServiceImplTest {
         medicationRepository = mock(MedicationRepository.class);
         analysisResultRepository = mock(AnalysisResultRepository.class);
         drugApiClient = mock(DrugApiClient.class);
+        transactionManager = mock(PlatformTransactionManager.class);
         service = new EvidenceCardServiceImpl(new WardAccessValidator(wardRepository), medicationRepository,
-                analysisResultRepository, drugApiClient, JsonMapper.builder().build());
+                analysisResultRepository, drugApiClient, JsonMapper.builder().build(), transactionManager);
 
         LocalDate birth = KoreanDate.today().minusYears(78);
         ward = ward(WARD_ID, GUARDIAN_ID, java.sql.Date.valueOf(birth), false, true);
@@ -120,13 +123,31 @@ class EvidenceCardServiceImplTest {
         // has_warning: findings 가 있거나(12) 상호작용에 걸린(15) 약만
         assertThat(card.medications()).extracting(CardMedication::hasWarning).containsExactly(true, true, false);
 
-        ArgumentCaptor<AnalysisResult> saved = ArgumentCaptor.forClass(AnalysisResult.class);
-        verify(analysisResultRepository, times(3)).save(saved.capture());
-        AnalysisResult first = saved.getAllValues().get(0);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<AnalysisResult>> captor = ArgumentCaptor.forClass(List.class);
+        verify(analysisResultRepository).saveAll(captor.capture());
+        List<AnalysisResult> saved = captor.getValue();
+        assertThat(saved).hasSize(3);
+        AnalysisResult first = saved.get(0);
         assertThat(first.getMedication()).isSameAs(tylenol);
         assertThat(first.getHasWarning()).isTrue();
         assertThat(first.getDetail()).contains("odsn_atent").contains("병용금기");
-        assertThat(saved.getAllValues().get(2).getHasWarning()).isFalse();
+        assertThat(saved.get(2).getHasWarning()).isFalse();
+
+        // 트랜잭션은 저장할 때 한 번만, FastAPI 호출이 끝난 뒤에 연다
+        var order = inOrder(drugApiClient, transactionManager, analysisResultRepository);
+        order.verify(drugApiClient).cabinetCheck(any());
+        order.verify(transactionManager).getTransaction(any());
+        order.verify(analysisResultRepository).saveAll(any());
+        order.verify(transactionManager).commit(any());
+        verify(transactionManager, times(1)).getTransaction(any());
+    }
+
+    @Test
+    void 피보호자_본인도_근거_카드는_볼_수_있다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of());
+
+        assertThat(service.getEvidenceCard(wardUser(WARD_ID), WARD_ID).level()).isEqualTo("EMPTY");
     }
 
     @Test

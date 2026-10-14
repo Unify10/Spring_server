@@ -5,6 +5,8 @@ import com.unify.onyak.domain.medications.dto.response.EvidenceCardResponse.Card
 import com.unify.onyak.domain.medications.dto.response.EvidenceCardResponse.Patient;
 import com.unify.onyak.domain.medications.service.EvidenceCardService;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
+import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -28,16 +30,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EvidenceCardController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class EvidenceCardControllerTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProvider;
     @MockitoBean EvidenceCardService evidenceCardService;
 
     @Test
     void 미인증_요청은_거부된다() throws Exception {
         int status = mockMvc.perform(get("/wards/7/evidence-card")).andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        assertEquals(401, status);
         verifyNoInteractions(evidenceCardService);
     }
 

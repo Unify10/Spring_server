@@ -5,8 +5,12 @@ import com.unify.onyak.domain.medications.dto.request.MedicationUpdateRequest;
 import com.unify.onyak.domain.medications.dto.request.ScheduleRequest;
 import com.unify.onyak.domain.medications.dto.response.MedicationResponse;
 import com.unify.onyak.domain.medications.dto.response.ScheduleResponse;
+import com.unify.onyak.domain.medications.error.exception.MedicationWriteForbiddenException;
+import com.unify.onyak.domain.medications.error.exception.WardAccessDeniedException;
 import com.unify.onyak.domain.medications.service.MedicationService;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
+import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +24,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import java.time.LocalDate;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -30,10 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MedicationController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class MedicationControllerTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtProvider jwtProvider;
     @MockitoBean MedicationService medicationService;
 
     static final MedicationResponse TYLENOL = new MedicationResponse(
@@ -48,7 +53,7 @@ class MedicationControllerTest {
     @Test
     void 미인증_요청은_거부된다() throws Exception {
         int status = mockMvc.perform(get("/wards/7/medications")).andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        assertEquals(401, status);
         verifyNoInteractions(medicationService);
     }
 
@@ -186,5 +191,53 @@ class MedicationControllerTest {
                         .content("{\"schedule_times\":[\"08:00\"]}"))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(medicationService);
+    }
+
+    // ── 권한 거부가 403 응답으로 나가는지 ─────────────────────────
+    static RequestPostProcessor wardSelf() {
+        CustomUserDetails user = new CustomUserDetails(7L, "7", null, "ROLE_WARD");
+        return authentication(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+    }
+
+    @Test
+    void 피보호자_토큰으로_약을_담으면_403() throws Exception {
+        when(medicationService.addMedication(any(), eq(7L), any(MedicationCreateRequest.class)))
+                .thenThrow(new MedicationWriteForbiddenException());
+
+        mockMvc.perform(post("/wards/7/medications").with(wardSelf())
+                        .contentType("application/json")
+                        .content("{\"item_seq\":\"195700020\",\"dosage\":\"1정\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("MEDICATION_WRITE_FORBIDDEN"));
+    }
+
+    @Test
+    void 피보호자_토큰으로_중단·삭제·일정설정하면_403() throws Exception {
+        when(medicationService.updateMedication(any(), eq(10L), any(MedicationUpdateRequest.class)))
+                .thenThrow(new MedicationWriteForbiddenException());
+        doThrow(new MedicationWriteForbiddenException()).when(medicationService).deleteMedication(any(), eq(10L));
+        when(medicationService.updateSchedule(any(), eq(10L), any(ScheduleRequest.class)))
+                .thenThrow(new MedicationWriteForbiddenException());
+
+        mockMvc.perform(patch("/medications/10").with(wardSelf())
+                        .contentType("application/json").content("{\"active\":false}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/medications/10").with(wardSelf()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/medications/10/schedule").with(wardSelf())
+                        .contentType("application/json")
+                        .content("{\"schedule_times\":[\"08:00\"],\"push_enabled\":true}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 다른_보호자_토큰이면_403() throws Exception {
+        CustomUserDetails stranger = new CustomUserDetails(99L, "99", null, "ROLE_GUARDIAN");
+        doThrow(new WardAccessDeniedException()).when(medicationService).deleteMedication(any(), eq(10L));
+
+        mockMvc.perform(delete("/medications/10")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(stranger, null, stranger.getAuthorities()))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("WARD_ACCESS_DENIED"));
     }
 }

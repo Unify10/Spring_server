@@ -1,11 +1,15 @@
 package com.unify.onyak.domain.medications.policy;
 
+import com.unify.onyak.domain.medications.error.exception.MedicationWriteForbiddenException;
 import com.unify.onyak.domain.medications.error.exception.WardAccessDeniedException;
 import com.unify.onyak.domain.medications.error.exception.WardNotFoundException;
+import com.unify.onyak.domain.medications.policy.WardAccessValidator.Access;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.Optional;
 
@@ -19,54 +23,54 @@ class WardAccessValidatorTest {
 
     WardRepository wardRepository;
     WardAccessValidator validator;
+    Ward ward;
 
     @BeforeEach
     void setUp() {
         wardRepository = mock(WardRepository.class);
         validator = new WardAccessValidator(wardRepository);
+        ward = ward(7L, 3L);   // thenReturn 안에서 목을 만들면 Mockito 가 중첩 스터빙으로 막는다
+        when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
     }
 
-    @Test
-    void 자기_피보호자면_통과한다() {
-        Ward ward = ward(7L, 3L);
-        when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
-
-        assertThat(validator.validate(guardian(3L), 7L)).isSameAs(ward);
+    @ParameterizedTest
+    @EnumSource(Access.class)
+    void 보호자는_자기_피보호자를_읽고_쓸_수_있다(Access access) {
+        assertThat(validator.validate(guardian(3L), 7L, access)).isSameAs(ward);
     }
 
-    @Test
-    void 남의_피보호자면_403() {
-        Ward ward = ward(7L, 3L);   // thenReturn 안에서 목을 만들면 Mockito 가 중첩 스터빙으로 막는다
-        when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
-
-        assertThatThrownBy(() -> validator.validate(guardian(99L), 7L))
+    @ParameterizedTest
+    @EnumSource(Access.class)
+    void 다른_보호자는_읽기도_쓰기도_403(Access access) {
+        assertThatThrownBy(() -> validator.validate(guardian(99L), 7L, access))
                 .isInstanceOf(WardAccessDeniedException.class);
     }
 
     @Test
-    void 피보호자_본인은_통과하고_다른_피보호자는_403() {
-        Ward ward = ward(7L, 3L);
-        when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
+    void 피보호자_본인은_읽기만_된다() {
+        assertThat(validator.validate(wardUser(7L), 7L, Access.READ)).isSameAs(ward);
+        assertThatThrownBy(() -> validator.validate(wardUser(7L), 7L, Access.WRITE))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+    }
 
-        assertThat(validator.validate(wardUser(7L), 7L)).isSameAs(ward);
-        assertThatThrownBy(() -> validator.validate(wardUser(8L), 7L))
+    @ParameterizedTest
+    @EnumSource(Access.class)
+    void 다른_피보호자는_403(Access access) {
+        assertThatThrownBy(() -> validator.validate(wardUser(8L), 7L, access))
                 .isInstanceOf(WardAccessDeniedException.class);
     }
 
     @Test
     void 없는_피보호자면_404() {
-        when(wardRepository.findById(7L)).thenReturn(Optional.empty());
+        when(wardRepository.findById(9L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> validator.validate(guardian(3L), 7L))
+        assertThatThrownBy(() -> validator.validate(guardian(3L), 9L, Access.READ))
                 .isInstanceOf(WardNotFoundException.class);
     }
 
     @Test
     void 인증정보가_없으면_403() {
-        Ward ward = ward(7L, 3L);   // thenReturn 안에서 목을 만들면 Mockito 가 중첩 스터빙으로 막는다
-        when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
-
-        assertThatThrownBy(() -> validator.validate(null, 7L))
+        assertThatThrownBy(() -> validator.validate(null, 7L, Access.READ))
                 .isInstanceOf(WardAccessDeniedException.class);
     }
 }

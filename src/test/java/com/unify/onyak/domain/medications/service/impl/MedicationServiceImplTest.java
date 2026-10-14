@@ -17,7 +17,8 @@ import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -39,6 +40,7 @@ class MedicationServiceImplTest {
     MedicationRepository medicationRepository;
     WardRepository wardRepository;
     DrugService drugService;
+    PlatformTransactionManager transactionManager;
     MedicationServiceImpl service;
 
     Ward ward;
@@ -50,7 +52,9 @@ class MedicationServiceImplTest {
         medicationRepository = mock(MedicationRepository.class);
         wardRepository = mock(WardRepository.class);
         drugService = mock(DrugService.class);
-        service = new MedicationServiceImpl(medicationRepository, drugService, new WardAccessValidator(wardRepository));
+        transactionManager = mock(PlatformTransactionManager.class);
+        service = new MedicationServiceImpl(medicationRepository, drugService,
+                new WardAccessValidator(wardRepository), transactionManager);
 
         ward = ward(WARD_ID, GUARDIAN_ID);
         tylenol = drug(1L, "195700020", "타이레놀정500mg", List.of("아세트아미노펜"));
@@ -68,10 +72,14 @@ class MedicationServiceImplTest {
     @Test
     void 약을_담으면_시작일은_오늘_알림은_켜짐_시각은_정렬된다() {
         when(drugService.getOrFetch("195700020")).thenReturn(tylenol);
-        when(medicationRepository.save(any(Medication.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(medicationRepository.saveAndFlush(any(Medication.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MedicationResponse res = service.addMedication(me, WARD_ID,
                 new MedicationCreateRequest(" 195700020 ", "1정", null, List.of("20:00", "08:00"), null));
+
+        // 저장만 트랜잭션 안에서 한다 (FastAPI 호출은 밖)
+        verify(transactionManager).getTransaction(any());
+        verify(transactionManager).commit(any());
 
         assertThat(res.drugId()).isEqualTo("195700020");
         assertThat(res.drugName()).isEqualTo("타이레놀정500mg");
@@ -89,7 +97,38 @@ class MedicationServiceImplTest {
         assertThatThrownBy(() -> service.addMedication(me, WARD_ID,
                 new MedicationCreateRequest("195700020", "1정", null, null, null)))
                 .isInstanceOf(DuplicateMedicationException.class);
-        verify(medicationRepository, never()).save(any());
+        verify(medicationRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void 동시에_담겨_유니크_인덱스에_걸려도_409() {
+        when(drugService.getOrFetch("195700020")).thenReturn(tylenol);
+        when(medicationRepository.saveAndFlush(any(Medication.class))).thenThrow(new DataIntegrityViolationException(
+                "duplicate key value violates unique constraint \"uq_medications_ward_drug_active\""));
+
+        assertThatThrownBy(() -> service.addMedication(me, WARD_ID,
+                new MedicationCreateRequest("195700020", "1정", null, null, null)))
+                .isInstanceOf(DuplicateMedicationException.class);
+        verify(transactionManager).rollback(any());
+    }
+
+    @Test
+    void 다른_제약_위반은_409로_바꾸지_않는다() {
+        when(drugService.getOrFetch("195700020")).thenReturn(tylenol);
+        when(medicationRepository.saveAndFlush(any(Medication.class)))
+                .thenThrow(new DataIntegrityViolationException("violates foreign key constraint"));
+
+        assertThatThrownBy(() -> service.addMedication(me, WARD_ID,
+                new MedicationCreateRequest("195700020", "1정", null, null, null)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 시각이_잘못되면_FastAPI를_부르기_전에_거른다() {
+        assertThatThrownBy(() -> service.addMedication(me, WARD_ID,
+                new MedicationCreateRequest("195700020", "1정", null, List.of("08:00", "08:00"), null)))
+                .isInstanceOf(InvalidScheduleTimeException.class);
+        verifyNoInteractions(drugService);
     }
 
     @Test
@@ -161,6 +200,17 @@ class MedicationServiceImplTest {
 
         assertThat(res.active()).isTrue();
         assertThat(res.endDate()).isNull();
+    }
+
+    @Test
+    void 재개하는_사이_같은_약이_담겨_유니크_인덱스에_걸려도_409() {
+        Medication m = stored(10L, List.of());
+        m.stop(LocalDate.of(2026, 10, 5));
+        doThrow(new DataIntegrityViolationException("uq_medications_ward_drug_active"))
+                .when(medicationRepository).flush();
+
+        assertThatThrownBy(() -> service.updateMedication(me, 10L, new MedicationUpdateRequest(null, true, null)))
+                .isInstanceOf(DuplicateMedicationException.class);
     }
 
     @Test
@@ -252,5 +302,66 @@ class MedicationServiceImplTest {
         assertThatThrownBy(() -> MedicationServiceImpl.parseTimes(List.of("24:00")))
                 .isInstanceOf(InvalidScheduleTimeException.class);
         assertThat(MedicationServiceImpl.parseTimes(null)).isEmpty();
+    }
+
+    // ── 권한: 쓰기 경로 ──────────────────────────────────────────
+    @Test
+    void 피보호자는_자기_약장을_조회는_해도_수정은_못한다() {
+        CustomUserDetails wardSelf = wardUser(WARD_ID);
+        stored(10L, List.of(LocalTime.of(8, 0)));
+        when(medicationRepository.findAllByWardWithDrug(anyLong(), any())).thenReturn(List.of());
+
+        // 읽기는 된다
+        service.getMedications(wardSelf, WARD_ID, "active");
+        service.getMedication(wardSelf, 10L);
+        service.getSchedule(wardSelf, 10L);
+
+        // 쓰기는 전부 403
+        assertThatThrownBy(() -> service.addMedication(wardSelf, WARD_ID,
+                new MedicationCreateRequest("195700020", "1정", null, null, null)))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+        assertThatThrownBy(() -> service.updateMedication(wardSelf, 10L, new MedicationUpdateRequest("2정", null, null)))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+        assertThatThrownBy(() -> service.updateMedication(wardSelf, 10L, new MedicationUpdateRequest(null, false, null)))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+        assertThatThrownBy(() -> service.deleteMedication(wardSelf, 10L))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+        assertThatThrownBy(() -> service.updateSchedule(wardSelf, 10L, new ScheduleRequest(List.of("09:00"), true)))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
+
+        verifyNoInteractions(drugService);
+        verify(medicationRepository, never()).saveAndFlush(any());
+        verify(medicationRepository, never()).delete(any());
+    }
+
+    @Test
+    void 다른_보호자는_쓰기_경로가_모두_403() {
+        CustomUserDetails stranger = guardian(99L);
+        Medication m = stored(10L, List.of());
+
+        assertThatThrownBy(() -> service.addMedication(stranger, WARD_ID,
+                new MedicationCreateRequest("195700020", "1정", null, null, null)))
+                .isInstanceOf(WardAccessDeniedException.class);
+        assertThatThrownBy(() -> service.updateMedication(stranger, 10L, new MedicationUpdateRequest(null, false, null)))
+                .isInstanceOf(WardAccessDeniedException.class);
+        assertThatThrownBy(() -> service.deleteMedication(stranger, 10L))
+                .isInstanceOf(WardAccessDeniedException.class);
+        assertThatThrownBy(() -> service.updateSchedule(stranger, 10L, new ScheduleRequest(List.of("09:00"), true)))
+                .isInstanceOf(WardAccessDeniedException.class);
+
+        assertThat(m.isActive()).isTrue();
+        assertThat(m.getScheduleTimes()).isEmpty();
+        verifyNoInteractions(drugService);
+        verify(medicationRepository, never()).delete(any());
+    }
+
+    @Test
+    void 다른_피보호자는_조회도_403() {
+        stored(10L, List.of());
+
+        assertThatThrownBy(() -> service.getMedication(wardUser(8L), 10L))
+                .isInstanceOf(WardAccessDeniedException.class);
+        assertThatThrownBy(() -> service.getMedications(wardUser(8L), WARD_ID, "active"))
+                .isInstanceOf(WardAccessDeniedException.class);
     }
 }
