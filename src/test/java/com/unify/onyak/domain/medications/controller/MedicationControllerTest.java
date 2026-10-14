@@ -212,7 +212,7 @@ class MedicationControllerTest {
     }
 
     @Test
-    void 피보호자_토큰으로_중단·삭제·일정설정하면_403() throws Exception {
+    void 피보호자_토큰으로_중단_삭제_일정설정하면_403() throws Exception {
         when(medicationService.updateMedication(any(), eq(10L), any(MedicationUpdateRequest.class)))
                 .thenThrow(new MedicationWriteForbiddenException());
         doThrow(new MedicationWriteForbiddenException()).when(medicationService).deleteMedication(any(), eq(10L));
