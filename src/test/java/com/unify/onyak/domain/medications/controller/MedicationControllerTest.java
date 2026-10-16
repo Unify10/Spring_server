@@ -120,6 +120,14 @@ class MedicationControllerTest {
                 .andExpect(jsonPath("$.data.medication_id").value(10));
     }
 
+    @Test
+    void 경로의_id가_숫자가_아니면_400() throws Exception {
+        mockMvc.perform(get("/medications/abc").with(guardian()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("INVALID_PARAMETER"));
+        verifyNoInteractions(medicationService);
+    }
+
     // ── 5.2 ─────────────────────────────────────────────────────
     @Test
     void 복용을_중단한다() throws Exception {
@@ -158,7 +166,7 @@ class MedicationControllerTest {
         when(medicationService.updateSchedule(any(), eq(10L), any(ScheduleRequest.class)))
                 .thenReturn(new ScheduleResponse(10L, List.of("08:00", "20:00"), true, true));
 
-        mockMvc.perform(put("/medications/10/schedule").with(guardian())
+        mockMvc.perform(patch("/medications/10/schedule").with(guardian())
                         .contentType("application/json")
                         .content("{\"schedule_times\":[\"20:00\",\"08:00\"],\"push_enabled\":true}"))
                 .andExpect(status().isOk())
@@ -166,8 +174,18 @@ class MedicationControllerTest {
     }
 
     @Test
-    void 시각_형식이_틀리면_400() throws Exception {
+    void 일정_변경을_PUT으로_보내면_405() throws Exception {
         mockMvc.perform(put("/medications/10/schedule").with(guardian())
+                        .contentType("application/json")
+                        .content("{\"schedule_times\":[\"08:00\"]}"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.error_code").value("METHOD_NOT_ALLOWED"));
+        verifyNoInteractions(medicationService);
+    }
+
+    @Test
+    void 시각_형식이_틀리면_400() throws Exception {
+        mockMvc.perform(patch("/medications/10/schedule").with(guardian())
                         .contentType("application/json")
                         .content("{\"schedule_times\":[\"25:00\"],\"push_enabled\":true}"))
                 .andExpect(status().isBadRequest())
@@ -177,7 +195,7 @@ class MedicationControllerTest {
 
     @Test
     void 같은_시각이_두번이면_400() throws Exception {
-        mockMvc.perform(put("/medications/10/schedule").with(guardian())
+        mockMvc.perform(patch("/medications/10/schedule").with(guardian())
                         .contentType("application/json")
                         .content("{\"schedule_times\":[\"08:00\",\"08:00\"],\"push_enabled\":true}"))
                 .andExpect(status().isBadRequest());
@@ -185,12 +203,15 @@ class MedicationControllerTest {
     }
 
     @Test
-    void push_enabled가_없으면_400() throws Exception {
-        mockMvc.perform(put("/medications/10/schedule").with(guardian())
+    void 일정은_보낸_필드만_보내도_된다() throws Exception {
+        when(medicationService.updateSchedule(any(), eq(10L), any(ScheduleRequest.class)))
+                .thenReturn(new ScheduleResponse(10L, List.of("08:00"), false, false));
+
+        mockMvc.perform(patch("/medications/10/schedule").with(guardian())
                         .contentType("application/json")
-                        .content("{\"schedule_times\":[\"08:00\"]}"))
-                .andExpect(status().isBadRequest());
-        verifyNoInteractions(medicationService);
+                        .content("{\"push_enabled\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.push_enabled").value(false));
     }
 
     // ── 권한 거부가 403 응답으로 나가는지 ─────────────────────────
@@ -212,22 +233,29 @@ class MedicationControllerTest {
     }
 
     @Test
-    void 피보호자_토큰으로_중단_삭제_일정설정하면_403() throws Exception {
+    void 피보호자_토큰으로_중단_삭제하면_403() throws Exception {
         when(medicationService.updateMedication(any(), eq(10L), any(MedicationUpdateRequest.class)))
                 .thenThrow(new MedicationWriteForbiddenException());
         doThrow(new MedicationWriteForbiddenException()).when(medicationService).deleteMedication(any(), eq(10L));
-        when(medicationService.updateSchedule(any(), eq(10L), any(ScheduleRequest.class)))
-                .thenThrow(new MedicationWriteForbiddenException());
 
         mockMvc.perform(patch("/medications/10").with(wardSelf())
                         .contentType("application/json").content("{\"active\":false}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("MEDICATION_WRITE_FORBIDDEN"));
         mockMvc.perform(delete("/medications/10").with(wardSelf()))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(put("/medications/10/schedule").with(wardSelf())
+    }
+
+    @Test
+    void 피보호자_토큰으로_일정을_바꾸면_200() throws Exception {
+        when(medicationService.updateSchedule(any(), eq(10L), any(ScheduleRequest.class)))
+                .thenReturn(new ScheduleResponse(10L, List.of("09:00"), true, true));
+
+        mockMvc.perform(patch("/medications/10/schedule").with(wardSelf())
                         .contentType("application/json")
-                        .content("{\"schedule_times\":[\"08:00\"],\"push_enabled\":true}"))
-                .andExpect(status().isForbidden());
+                        .content("{\"schedule_times\":[\"09:00\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.schedule_times[0]").value("09:00"));
     }
 
     @Test

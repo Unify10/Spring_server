@@ -285,6 +285,22 @@ class MedicationServiceImplTest {
     }
 
     @Test
+    void 일정은_보낸_필드만_바꾼다() {
+        Medication m = stored(10L, List.of(LocalTime.of(8, 0)));
+
+        // 알림만 끈다 → 시각은 그대로
+        ScheduleResponse off = service.updateSchedule(me, 10L, new ScheduleRequest(null, false));
+        assertThat(off.scheduleTimes()).containsExactly("08:00");
+        assertThat(off.pushEnabled()).isFalse();
+
+        // 시각만 바꾼다 → 알림 설정(꺼짐)은 그대로
+        ScheduleResponse moved = service.updateSchedule(me, 10L, new ScheduleRequest(List.of("21:00", "07:30"), null));
+        assertThat(moved.scheduleTimes()).containsExactly("07:30", "21:00");
+        assertThat(moved.pushEnabled()).isFalse();
+        assertThat(m.getPushEnabled()).isFalse();
+    }
+
+    @Test
     void 중단된_약에는_일정을_설정할_수_없다() {
         Medication m = stored(10L, List.of());
         m.stop(LocalDate.of(2026, 10, 5));
@@ -304,19 +320,24 @@ class MedicationServiceImplTest {
         assertThat(MedicationServiceImpl.parseTimes(null)).isEmpty();
     }
 
-    // ── 권한: 쓰기 경로 ──────────────────────────────────────────
+    // ── 권한 ────────────────────────────────────────────────────
     @Test
-    void 피보호자는_자기_약장을_조회는_해도_수정은_못한다() {
+    void 피보호자는_조회와_일정_변경만_되고_담기_중단_재개_용량변경_삭제는_403() {
         CustomUserDetails wardSelf = wardUser(WARD_ID);
-        stored(10L, List.of(LocalTime.of(8, 0)));
+        Medication m = stored(10L, List.of(LocalTime.of(8, 0)));
         when(medicationRepository.findAllByWardWithDrug(anyLong(), any())).thenReturn(List.of());
 
-        // 읽기는 된다
+        // 조회
         service.getMedications(wardSelf, WARD_ID, "active");
         service.getMedication(wardSelf, 10L);
         service.getSchedule(wardSelf, 10L);
 
-        // 쓰기는 전부 403
+        // 일정 변경 — 피보호자도 가능 (기능명세 5.3)
+        ScheduleResponse res = service.updateSchedule(wardSelf, 10L, new ScheduleRequest(List.of("09:00"), null));
+        assertThat(res.scheduleTimes()).containsExactly("09:00");
+        assertThat(m.getScheduleTimes()).containsExactly(LocalTime.of(9, 0));
+
+        // 담기·중단·재개·용량 변경·삭제는 403
         assertThatThrownBy(() -> service.addMedication(wardSelf, WARD_ID,
                 new MedicationCreateRequest("195700020", "1정", null, null, null)))
                 .isInstanceOf(MedicationWriteForbiddenException.class);
@@ -324,14 +345,24 @@ class MedicationServiceImplTest {
                 .isInstanceOf(MedicationWriteForbiddenException.class);
         assertThatThrownBy(() -> service.updateMedication(wardSelf, 10L, new MedicationUpdateRequest(null, false, null)))
                 .isInstanceOf(MedicationWriteForbiddenException.class);
+        assertThatThrownBy(() -> service.updateMedication(wardSelf, 10L, new MedicationUpdateRequest(null, true, null)))
+                .isInstanceOf(MedicationWriteForbiddenException.class);
         assertThatThrownBy(() -> service.deleteMedication(wardSelf, 10L))
                 .isInstanceOf(MedicationWriteForbiddenException.class);
-        assertThatThrownBy(() -> service.updateSchedule(wardSelf, 10L, new ScheduleRequest(List.of("09:00"), true)))
-                .isInstanceOf(MedicationWriteForbiddenException.class);
 
+        assertThat(m.isActive()).isTrue();
+        assertThat(m.getDosage()).isEqualTo("1정");
         verifyNoInteractions(drugService);
         verify(medicationRepository, never()).saveAndFlush(any());
         verify(medicationRepository, never()).delete(any());
+    }
+
+    @Test
+    void 다른_피보호자는_일정_변경도_403() {
+        stored(10L, List.of());
+
+        assertThatThrownBy(() -> service.updateSchedule(wardUser(8L), 10L, new ScheduleRequest(List.of("09:00"), true)))
+                .isInstanceOf(WardAccessDeniedException.class);
     }
 
     @Test

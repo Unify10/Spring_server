@@ -35,21 +35,21 @@ class WardAccessValidatorTest {
 
     @ParameterizedTest
     @EnumSource(Access.class)
-    void 보호자는_자기_피보호자를_읽고_쓸_수_있다(Access access) {
+    void 보호자는_자기_피보호자에_모든_권한이_있다(Access access) {
         assertThat(validator.validate(guardian(3L), 7L, access)).isSameAs(ward);
     }
 
     @ParameterizedTest
     @EnumSource(Access.class)
-    void 다른_보호자는_읽기도_쓰기도_403(Access access) {
+    void 다른_보호자는_모두_403(Access access) {
         assertThatThrownBy(() -> validator.validate(guardian(99L), 7L, access))
                 .isInstanceOf(WardAccessDeniedException.class);
     }
 
     @Test
-    void 피보호자_본인은_읽기만_된다() {
-        assertThat(validator.validate(wardUser(7L), 7L, Access.READ)).isSameAs(ward);
-        assertThatThrownBy(() -> validator.validate(wardUser(7L), 7L, Access.WRITE))
+    void 피보호자_본인은_WARD_OR_GUARDIAN만_통과한다() {
+        assertThat(validator.validate(wardUser(7L), 7L, Access.WARD_OR_GUARDIAN)).isSameAs(ward);
+        assertThatThrownBy(() -> validator.validate(wardUser(7L), 7L, Access.GUARDIAN_ONLY))
                 .isInstanceOf(MedicationWriteForbiddenException.class);
     }
 
@@ -64,13 +64,13 @@ class WardAccessValidatorTest {
     void 없는_피보호자면_404() {
         when(wardRepository.findById(9L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> validator.validate(guardian(3L), 9L, Access.READ))
+        assertThatThrownBy(() -> validator.validate(guardian(3L), 9L, Access.WARD_OR_GUARDIAN))
                 .isInstanceOf(WardNotFoundException.class);
     }
 
     @Test
     void 인증정보가_없으면_403() {
-        assertThatThrownBy(() -> validator.validate(null, 7L, Access.READ))
+        assertThatThrownBy(() -> validator.validate(null, 7L, Access.WARD_OR_GUARDIAN))
                 .isInstanceOf(WardAccessDeniedException.class);
     }
 }

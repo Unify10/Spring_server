@@ -150,6 +150,84 @@ class EvidenceCardServiceImplTest {
         assertThat(service.getEvidenceCard(wardUser(WARD_ID), WARD_ID).level()).isEqualTo("EMPTY");
     }
 
+    private CabinetCheckResponse dangerResponse(String tylenolFindingKey) {
+        Finding finding = new Finding(tylenolFindingKey, "라벨", "CAUTION", "내용", null, "");
+        return new CabinetCheckResponse("DANGER", "헤드라인",
+                List.of(result("12", "195700020", List.of(finding)),
+                        result("15", "200000001", List.of())),
+                List.of(new Interaction("병용금기", "CONTRAINDICATED", List.of("12", "15"),
+                        List.of("타이레놀정500mg", "테스트병용약정"), "간독성")),
+                List.of(), "참고 정보");
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<AnalysisResult> firstSaved() {
+        ArgumentCaptor<List<AnalysisResult>> captor = ArgumentCaptor.forClass(List.class);
+        verify(analysisResultRepository).saveAll(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    void 직전_스냅샷과_같으면_다시_저장하지_않는다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol, partner));
+        when(drugApiClient.cabinetCheck(any())).thenReturn(dangerResponse("odsn_atent"));
+
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+        List<AnalysisResult> first = firstSaved();
+        assertThat(first).hasSize(2);
+
+        // 두 번째 조회: 직전 스냅샷이 DB 에 있다고 가정 (jsonb 처럼 키 순서가 바뀌어 있어도 같은 내용)
+        when(analysisResultRepository.findLatestByMedicationIds(any())).thenReturn(first);
+        clearInvocations(analysisResultRepository, transactionManager);
+
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+
+        verify(analysisResultRepository, never()).saveAll(any());
+        verifyNoInteractions(transactionManager);   // 바뀐 게 없으면 쓰기 트랜잭션도 열지 않는다
+    }
+
+    @Test
+    void 판정이_바뀐_약만_새로_저장한다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol, partner));
+        when(drugApiClient.cabinetCheck(any())).thenReturn(dangerResponse("odsn_atent"));
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+        List<AnalysisResult> first = firstSaved();
+
+        when(analysisResultRepository.findLatestByMedicationIds(any())).thenReturn(first);
+        when(drugApiClient.cabinetCheck(any())).thenReturn(dangerResponse("efcy_dplct"));   // 타이레놀 판정만 바뀜
+        clearInvocations(analysisResultRepository);
+
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+
+        List<AnalysisResult> second = firstSaved();
+        assertThat(second).extracting(AnalysisResult::getMedication).containsExactly(tylenol);
+        assertThat(second.get(0).getDetail()).contains("efcy_dplct");
+    }
+
+    @Test
+    void jsonb가_키_순서를_바꿔_돌려줘도_같은_내용으로_본다() throws Exception {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol));
+        when(drugApiClient.cabinetCheck(any())).thenReturn(new CabinetCheckResponse("OK", "없음",
+                List.of(result("12", "195700020", List.of())), List.of(), List.of(), "참고"));
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+        AnalysisResult saved = firstSaved().get(0);
+
+        // PostgreSQL jsonb 처럼 키 순서를 뒤집은 문자열로 저장돼 있었다고 가정
+        var mapper = JsonMapper.builder().build();
+        var tree = (tools.jackson.databind.node.ObjectNode) mapper.readTree(saved.getDetail());
+        var reversed = mapper.createObjectNode();
+        java.util.List<String> names = new java.util.ArrayList<>(tree.propertyNames());
+        java.util.Collections.reverse(names);
+        names.forEach(n -> reversed.set(n, tree.get(n)));
+        AnalysisResult stored = AnalysisResult.of(tylenol, saved.getHasWarning(), mapper.writeValueAsString(reversed));
+
+        when(analysisResultRepository.findLatestByMedicationIds(any())).thenReturn(List.of(stored));
+        clearInvocations(analysisResultRepository);
+
+        service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+        verify(analysisResultRepository, never()).saveAll(any());
+    }
+
     @Test
     void FastAPI_장애는_502로_전파된다() {
         when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol));
