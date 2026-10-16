@@ -58,7 +58,7 @@ public class MedicationServiceImpl implements MedicationService {
     @Override
     @Transactional(readOnly = true)
     public List<MedicationResponse> getMedications(CustomUserDetails user, Long wardId, String status) {
-        wardAccessValidator.validate(user, wardId, Access.READ);
+        wardAccessValidator.validate(user, wardId, Access.WARD_OR_GUARDIAN);
         List<Boolean> actives = switch (status == null ? "active" : status) {
             case "active" -> List.of(true);
             case "stopped" -> List.of(false);
@@ -77,7 +77,7 @@ public class MedicationServiceImpl implements MedicationService {
      */
     @Override
     public MedicationResponse addMedication(CustomUserDetails user, Long wardId, MedicationCreateRequest request) {
-        Ward ward = wardAccessValidator.validate(user, wardId, Access.WRITE);
+        Ward ward = wardAccessValidator.validate(user, wardId, Access.GUARDIAN_ONLY);
         List<LocalTime> times = parseTimes(request.scheduleTimes());   // 네트워크 호출 전에 입력부터 거른다
         Drug drug = drugService.getOrFetch(request.itemSeq().strip());
 
@@ -100,7 +100,7 @@ public class MedicationServiceImpl implements MedicationService {
     @Override
     @Transactional(readOnly = true)
     public MedicationResponse getMedication(CustomUserDetails user, Long medicationId) {
-        return MedicationResponse.from(findAccessible(user, medicationId, Access.READ));
+        return MedicationResponse.from(findAccessible(user, medicationId, Access.WARD_OR_GUARDIAN));
     }
 
     // ── 5.2 삭제 및 중단 ────────────────────────────────────────
@@ -108,7 +108,7 @@ public class MedicationServiceImpl implements MedicationService {
     @Transactional
     public MedicationResponse updateMedication(CustomUserDetails user, Long medicationId,
                                                MedicationUpdateRequest request) {
-        Medication medication = findAccessible(user, medicationId, Access.WRITE);
+        Medication medication = findAccessible(user, medicationId, Access.GUARDIAN_ONLY);
 
         if (request.dosage() != null) {
             medication.changeDosage(request.dosage().strip());
@@ -146,24 +146,32 @@ public class MedicationServiceImpl implements MedicationService {
     @Override
     @Transactional
     public void deleteMedication(CustomUserDetails user, Long medicationId) {
-        medicationRepository.delete(findAccessible(user, medicationId, Access.WRITE));
+        medicationRepository.delete(findAccessible(user, medicationId, Access.GUARDIAN_ONLY));
     }
 
     // ── 5.3 복용 일정 / 알림 ────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public ScheduleResponse getSchedule(CustomUserDetails user, Long medicationId) {
-        return ScheduleResponse.from(findAccessible(user, medicationId, Access.READ));
+        return ScheduleResponse.from(findAccessible(user, medicationId, Access.WARD_OR_GUARDIAN));
     }
 
     @Override
     @Transactional
     public ScheduleResponse updateSchedule(CustomUserDetails user, Long medicationId, ScheduleRequest request) {
-        Medication medication = findAccessible(user, medicationId, Access.WRITE);
+        // 복용 일정은 피보호자 본인도 바꿀 수 있다 (기능명세 5.3)
+        Medication medication = findAccessible(user, medicationId, Access.WARD_OR_GUARDIAN);
         if (!medication.isActive()) {
             throw new InactiveMedicationException();
         }
-        medication.updateSchedule(parseTimes(request.scheduleTimes()), request.pushEnabled());
+        // PATCH — 보낸 필드만 바꾼다
+        List<LocalTime> times = request.scheduleTimes() != null
+                ? parseTimes(request.scheduleTimes())
+                : medication.getScheduleTimes();
+        boolean pushEnabled = request.pushEnabled() != null
+                ? request.pushEnabled()
+                : Boolean.TRUE.equals(medication.getPushEnabled());
+        medication.updateSchedule(times, pushEnabled);
         // 실제 푸시 발송은 추후 연동
         // medicationReminderScheduler.reschedule(medication);
         return ScheduleResponse.from(medication);

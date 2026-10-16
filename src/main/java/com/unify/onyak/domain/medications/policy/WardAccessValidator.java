@@ -10,9 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 약장 API 공통 권한 검사.
+ * 약장 API 공통 권한 검사 (기능명세 5.x / API 명세 기준).
  * <table>
- *   <tr><th></th><th>조회 (READ)</th><th>담기·수정·삭제·일정 설정 (WRITE)</th></tr>
+ *   <tr><th></th><th>WARD_OR_GUARDIAN<br>조회·복용 일정 변경·근거 카드</th><th>GUARDIAN_ONLY<br>담기·중단·재개·용량 변경·삭제</th></tr>
  *   <tr><td>보호자</td><td>자기 피보호자</td><td>자기 피보호자</td></tr>
  *   <tr><td>피보호자</td><td>본인</td><td>불가 (403)</td></tr>
  * </table>
@@ -22,7 +22,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WardAccessValidator {
 
-    public enum Access { READ, WRITE }
+    public enum Access {
+        /** 보호자(자기 피보호자) + 피보호자 본인 */
+        WARD_OR_GUARDIAN,
+        /** 보호자(자기 피보호자)만 */
+        GUARDIAN_ONLY
+    }
 
     private static final String GUARDIAN = "GUARDIAN";
     private static final String WARD = "WARD";
@@ -51,7 +56,7 @@ public class WardAccessValidator {
                 if (!user.getUserId().equals(ward.getId())) {
                     throw new WardAccessDeniedException();
                 }
-                if (access == Access.WRITE) {
+                if (access == Access.GUARDIAN_ONLY) {
                     throw new MedicationWriteForbiddenException();
                 }
             }

@@ -29,6 +29,6 @@ public interface MedicationService {
     /** 5.3 복용 일정 조회 */
     ScheduleResponse getSchedule(CustomUserDetails user, Long medicationId);
 
-    /** 5.3 복용 일정·알림 설정 */
+    /** 5.3 복용 일정·알림 변경 (보낸 필드만) — 보호자와 피보호자 본인 모두 가능 */
     ScheduleResponse updateSchedule(CustomUserDetails user, Long medicationId, ScheduleRequest request);
 }

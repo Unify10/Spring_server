@@ -20,6 +20,7 @@ import com.unify.onyak.global.security.CustomUserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
@@ -39,6 +40,9 @@ import java.util.stream.Collectors;
  * <p>
  * FastAPI 호출(최대 13초) 동안 DB 커넥션을 쥐지 않도록 메서드 전체에 트랜잭션을 걸지 않는다.
  * 조회는 리포지토리 단위로 끝내고, analysis_results 저장만 짧은 트랜잭션으로 묶는다.
+ * <p>
+ * 카드를 볼 때마다 행이 쌓이지 않도록, 약별로 직전 스냅샷과 내용이 같으면 저장하지 않는다.
+ * 그래서 analysis_results 에는 "판정 결과가 바뀐 시점"만 남는다.
  */
 @Service
 public class EvidenceCardServiceImpl implements EvidenceCardService {
@@ -70,7 +74,7 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
 
     @Override
     public EvidenceCardResponse getEvidenceCard(CustomUserDetails user, Long wardId) {
-        Ward ward = wardAccessValidator.validate(user, wardId, Access.READ);
+        Ward ward = wardAccessValidator.validate(user, wardId, Access.WARD_OR_GUARDIAN);
         Patient patient = new Patient(
                 KoreanDate.ageOn(ward.getBirthDate(), KoreanDate.today()),
                 ward.getIsPregnant()
@@ -111,9 +115,7 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
             cardMedications.add(card);
             snapshots.add(AnalysisResult.of(medication, hasWarning, snapshot(card, related)));
         }
-        if (!snapshots.isEmpty()) {
-            transactionTemplate.executeWithoutResult(status -> analysisResultRepository.saveAll(snapshots));
-        }
+        saveChangedSnapshots(snapshots);
 
         return new EvidenceCardResponse(
                 ward.getId(), ward.getName(), now, patient,
@@ -121,6 +123,37 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
                 cardMedications, interactions, check.warnings(),
                 check.disclaimer() != null ? check.disclaimer() : DEFAULT_DISCLAIMER
         );
+    }
+
+    /** 직전 스냅샷과 판정 내용이 다른 약만 저장한다. 바뀐 게 없으면 쓰기 자체를 하지 않는다. */
+    private void saveChangedSnapshots(List<AnalysisResult> snapshots) {
+        if (snapshots.isEmpty()) {
+            return;
+        }
+        List<Long> medicationIds = snapshots.stream().map(a -> a.getMedication().getId()).toList();
+        Map<Long, AnalysisResult> latest = analysisResultRepository.findLatestByMedicationIds(medicationIds).stream()
+                .collect(Collectors.toMap(a -> a.getMedication().getId(), Function.identity(), (a, b) -> a));
+
+        List<AnalysisResult> changed = snapshots.stream()
+                .filter(s -> !sameAs(latest.get(s.getMedication().getId()), s))
+                .toList();
+        if (!changed.isEmpty()) {
+            transactionTemplate.executeWithoutResult(status -> analysisResultRepository.saveAll(changed));
+        }
+    }
+
+    /**
+     * jsonb 는 저장할 때 키 순서·공백을 정규화하므로 문자열이 아니라 JSON 트리로 비교한다.
+     */
+    private boolean sameAs(AnalysisResult previous, AnalysisResult current) {
+        if (previous == null || !current.getHasWarning().equals(previous.getHasWarning())) {
+            return false;
+        }
+        try {
+            return objectMapper.readTree(previous.getDetail()).equals(objectMapper.readTree(current.getDetail()));
+        } catch (JacksonException e) {
+            return false;   // 비교할 수 없으면 새로 남긴다
+        }
     }
 
     static String keyOf(Medication medication) {

@@ -84,8 +84,8 @@ public class MedicationController {
         return ApiResponse.ok(medicationService.getSchedule(userDetails, medId));
     }
 
-    // 5.3 복용 일정·알림 설정
-    @PutMapping("/medications/{medId}/schedule")
+    // 5.3 복용 일정·알림 변경 (보낸 필드만) — 보호자·피보호자 모두
+    @PatchMapping("/medications/{medId}/schedule")
     public ApiResponse<ScheduleResponse> updateSchedule(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long medId,

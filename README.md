@@ -43,7 +43,7 @@ DB/Redis 접속 정보, 메일 계정, JWT 서명 키는 `.env` 파일로 관리
 
 ## 가상 약장 API (5.1 / 5.2 / 5.3 / 6.2)
 
-보호자는 자기 피보호자의 약장만, 피보호자는 본인 약장만 다룰 수 있습니다.
+보호자는 자기 피보호자의 약장 전체를 다룰 수 있습니다. 피보호자는 본인 약장의 조회·복용 일정 변경·근거 카드만 가능하고, 담기·중단·재개·용량 변경·삭제는 `403`입니다.
 
 | Method | URL | 설명 |
 | --- | --- | --- |
@@ -52,9 +52,9 @@ DB/Redis 접속 정보, 메일 계정, JWT 서명 키는 `.env` 파일로 관리
 | GET | `/medications/{medId}` | 5.1 단건 조회 |
 | PATCH | `/medications/{medId}` | 5.2 용량 수정 · `active:false` 중단 · `active:true` 재개 |
 | DELETE | `/medications/{medId}` | 5.2 삭제 (복약 체크 기록·분석 결과도 함께 삭제됨) |
-| GET / PUT | `/medications/{medId}/schedule` | 5.3 복용 시각(`["08:00","20:00"]`)·알림 설정 |
+| GET / PATCH | `/medications/{medId}/schedule` | 5.3 복용 시각(`["08:00","20:00"]`)·알림 변경 (보낸 필드만) |
 | GET | `/wards/{wardId}/evidence-card` | 6.2 복약 확인 근거 카드 (DUR 점검) |
 
 - 약 정보와 DUR 판정은 Python_server(FastAPI)가 담당합니다. 실행 중이 아니면 약장 담기(처음 담는 약)와 근거 카드가 `502`를 반환합니다.
 - 약을 처음 담을 때 FastAPI `GET /drugs/{itemSeq}`로 받아 `drugs` 테이블에 저장하고, 이후에는 DB 값을 씁니다.
-- 근거 카드는 FastAPI `POST /drugs/cabinet-check`로 약장 전체를 한 번에 점검하고, 약별 결과를 `analysis_results`에 남깁니다.
+- 근거 카드는 FastAPI `POST /drugs/cabinet-check`로 약장 전체를 한 번에 점검하고, 약별 결과를 `analysis_results`에 남깁니다. 직전 스냅샷과 판정이 같으면 저장하지 않으므로 판정이 바뀐 시점만 쌓입니다.

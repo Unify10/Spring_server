@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum MedicationErrorCode implements ErrorCode {
     WARD_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 피보호자를 찾을 수 없습니다."),
     WARD_ACCESS_DENIED(HttpStatus.FORBIDDEN, "이 피보호자의 약장에 접근할 권한이 없습니다."),
-    MEDICATION_WRITE_FORBIDDEN(HttpStatus.FORBIDDEN, "약장 수정은 보호자만 할 수 있습니다."),
+    MEDICATION_WRITE_FORBIDDEN(HttpStatus.FORBIDDEN, "약 담기·중단·재개·용량 변경·삭제는 보호자만 할 수 있습니다."),
     MEDICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 약장 항목을 찾을 수 없습니다."),
     MEDICATION_DUPLICATE(HttpStatus.CONFLICT, "이미 복용 중으로 등록된 약입니다."),
     MEDICATION_INACTIVE(HttpStatus.CONFLICT, "복용 중단된 약입니다. 먼저 복용을 재개해 주세요."),
