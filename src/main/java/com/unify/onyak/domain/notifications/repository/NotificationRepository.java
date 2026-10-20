@@ -9,4 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Slice<Notification> findByRecipientTypeAndRecipientId(
             RecipientType recipientType, Long recipientId, Pageable pageable);
+
+    void deleteByRecipientTypeAndRecipientId(RecipientType recipientType, Long recipientId);
 }
