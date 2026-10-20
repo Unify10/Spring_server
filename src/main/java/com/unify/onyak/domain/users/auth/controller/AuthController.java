@@ -1,5 +1,9 @@
 package com.unify.onyak.domain.users.auth.controller;
 
+import com.unify.onyak.domain.users.auth.dto.request.LoginRequest;
+import com.unify.onyak.domain.users.auth.dto.request.RefreshRequest;
+import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
@@ -11,7 +15,6 @@ import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,10 +50,22 @@ public class AuthController {
         emailVerificationService.verifyCode(request.email(), request.code());
         return ApiResponse.ok(null);
     }
+
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
+        return ApiResponse.ok(authService.login(request));
+    }
+
+    // 토큰 재발급
+    @PostMapping("/refresh")
+    public ApiResponse<LoginResponse> refresh(@RequestBody @Valid RefreshRequest request) {
+        return ApiResponse.ok(authService.refresh(request));
+    }
+
     //로그아웃 기능
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        authService.logout(userDetails.getUserId(), userDetails.getRoleName());
-        return ResponseEntity.noContent().build();
+    public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.logout(userDetails.getUserId(), Role.valueOf(userDetails.getRoleName()));
+        return ApiResponse.ok(null);
     }
 }
