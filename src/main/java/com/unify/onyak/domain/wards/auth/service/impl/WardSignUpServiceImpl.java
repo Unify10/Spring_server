@@ -22,6 +22,7 @@ public class WardSignUpServiceImpl implements WardSignUpService {
     private final UserRepository userRepository;
     private final WardRepository wardRepository;
 
+    @Override
     @Transactional
     public WardSignUpResponse signUp(CustomUserDetails userDetails, WardSignUpRequest request){
 
