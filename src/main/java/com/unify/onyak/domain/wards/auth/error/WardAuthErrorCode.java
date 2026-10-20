@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum WardAuthErrorCode implements ErrorCode {
 
-    AUTH_ID_NOT_FOUND(HttpStatus.NOT_FOUND, "해당하는 보호자 ID가 없습니다."),
     GUARDIAN_ROLE_REQUIRED(HttpStatus.FORBIDDEN, "보호자 권한이 필요합니다.");
 
     private final HttpStatus httpStatus;

@@ -15,7 +15,7 @@ import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,7 +74,7 @@ class WardSignUpServiceTest {
     private WardSignUpRequest validRequest() {
         return new WardSignUpRequest(
                 "피보호자",
-                new Date(),
+                LocalDate.of(2010, 1, 1),
                 50.0f,
                 160.0f,
                 Gender.F,

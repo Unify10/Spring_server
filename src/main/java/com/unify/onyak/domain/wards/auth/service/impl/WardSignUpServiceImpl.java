@@ -23,6 +23,7 @@ public class WardSignUpServiceImpl implements WardSignUpService {
     private final WardRepository wardRepository;
 
     @Transactional
+    @Override
     public WardSignUpResponse signUp(CustomUserDetails userDetails, WardSignUpRequest request){
 
         if (!Role.GUARDIAN.name().equals(userDetails.getRoleName())) {
