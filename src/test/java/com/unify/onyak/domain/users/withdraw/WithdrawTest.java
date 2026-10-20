@@ -16,7 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -32,9 +31,9 @@ class WithdrawTest {
 
     @Test
     void 미인증_요청은_거부된다() throws Exception {
-        int status = mockMvc.perform(delete("/users/me"))
-                .andReturn().getResponse().getStatus();
-        assertTrue(status == 401 || status == 403, "status=" + status);
+        mockMvc.perform(delete("/users/me"))
+                .andExpect(status().isUnauthorized());
+
         verifyNoInteractions(withdrawService);
     }
 
