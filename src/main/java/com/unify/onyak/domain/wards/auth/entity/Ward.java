@@ -4,13 +4,12 @@ import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
 @Entity
+@AllArgsConstructor
 @Table(name = "wards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -18,7 +17,6 @@ public class Ward extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,10 +30,10 @@ public class Ward extends BaseTimeEntity {
     private Date birthDate;
 
     @Column(nullable = false)
-    private double weight;
+    private Float weight;
 
     @Column(nullable = false)
-    private double height;
+    private Float height;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,4 +47,21 @@ public class Ward extends BaseTimeEntity {
 
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
+
+    public static Ward createLocal(User guardianId, String name, Date birthDate, Float weight, Float height,
+                            Gender gender, Boolean isPregnant, Boolean medicationPushEnabled,
+                            Boolean sosPushEnabled){
+        return new Ward(
+                null,
+                guardianId,
+                name,
+                birthDate,
+                weight,
+                height,
+                gender,
+                isPregnant,
+                medicationPushEnabled,
+                sosPushEnabled
+        );
+    }
 }

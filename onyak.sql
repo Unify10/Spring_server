@@ -29,6 +29,7 @@ CREATE TABLE users (
                        is_pregnant BOOLEAN,
                        medication_push_enabled BOOLEAN NOT NULL DEFAULT true,
                        sos_push_enabled BOOLEAN NOT NULL DEFAULT true,
+                       marketing_push_enabled BOOLEAN NOT NULL DEFAULT true,
                        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                        CHECK (password_hash IS NOT NULL OR google_id IS NOT NULL)
@@ -134,6 +135,8 @@ CREATE TABLE medications (
                              created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_medications_ward_id ON medications(ward_id);
+-- 같은 피보호자에게 같은 약이 '복용 중'으로 두 번 들어가지 않게 한다 (중단 이력은 여러 건 허용)
+CREATE UNIQUE INDEX uq_medications_ward_drug_active ON medications(ward_id, drug_id) WHERE active;
 
 -- ============================================================
 -- medication_checks (복약체크기록)
