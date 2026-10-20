@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -100,7 +101,7 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
 
         List<CardMedication> cardMedications = new ArrayList<>();
         List<AnalysisResult> snapshots = new ArrayList<>();
-        for (CabinetCheckResponse.Medication result : check.medications()) {
+        for (CabinetCheckResponse.Medication result : withMissingAsLookupFailed(check.medications(), medications)) {
             Medication medication = byKey.get(result.key());
             if (medication == null) {
                 continue;   // 요청에 없던 key — 무시
@@ -123,6 +124,27 @@ public class EvidenceCardServiceImpl implements EvidenceCardService {
                 cardMedications, interactions, check.warnings(),
                 check.disclaimer() != null ? check.disclaimer() : DEFAULT_DISCLAIMER
         );
+    }
+
+    /**
+     * 요청했는데 응답에 없는 약은 조용히 빠지면 "검사된 것처럼" 보이므로, 조회 실패(lookupFailed)로 카드에 남긴다.
+     * 응답에 있는 약 뒤에 요청 순서대로 붙인다.
+     */
+    private static List<CabinetCheckResponse.Medication> withMissingAsLookupFailed(
+            List<CabinetCheckResponse.Medication> results, List<Medication> requested) {
+        Set<String> answeredKeys = results.stream()
+                .map(CabinetCheckResponse.Medication::key)
+                .collect(Collectors.toSet());
+
+        List<CabinetCheckResponse.Medication> merged = new ArrayList<>(results);
+        for (Medication medication : requested) {
+            if (!answeredKeys.contains(keyOf(medication))) {
+                merged.add(new CabinetCheckResponse.Medication(
+                        keyOf(medication), medication.getDrug().getItemSeq(), medication.getDrug().getName(),
+                        null, null, List.of(), List.of(), Map.of(), true));
+            }
+        }
+        return merged;
     }
 
     /** 직전 스냅샷과 판정 내용이 다른 약만 저장한다. 바뀐 게 없으면 쓰기 자체를 하지 않는다. */
