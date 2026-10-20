@@ -4,6 +4,7 @@ import com.unify.onyak.domain.wards.auth.controller.WardAuthController;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.global.config.SecurityConfig;
+import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
 import com.unify.onyak.global.jwt.JwtProvider;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(WardAuthController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
 class WardAuthControllerTest {
 
     @Autowired
