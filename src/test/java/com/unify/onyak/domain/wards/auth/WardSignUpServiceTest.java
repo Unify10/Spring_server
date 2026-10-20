@@ -11,6 +11,7 @@ import com.unify.onyak.domain.wards.auth.error.exception.GuardianRoleRequiredExc
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.domain.wards.auth.service.impl.WardSignUpServiceImpl;
+import com.unify.onyak.domain.wards.link_codes.service.LinkCodeService;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,12 +29,13 @@ class WardSignUpServiceTest {
     private UserRepository userRepository;
     private WardRepository wardRepository;
     private WardSignUpService wardSignUpService;
+    private LinkCodeService linkCodeService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         wardRepository = mock(WardRepository.class);
-        wardSignUpService = new WardSignUpServiceImpl(userRepository, wardRepository);
+        wardSignUpService = new WardSignUpServiceImpl(userRepository, wardRepository, linkCodeService);
     }
 
     @Test
