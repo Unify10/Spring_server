@@ -14,6 +14,7 @@ import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import com.unify.onyak.domain.users.auth.error.exception.UserIdNotFoundException;
 
 import java.util.List;
@@ -78,5 +79,26 @@ class WithdrawServiceTest {
         verify(userRepository).delete(user);
         verify(refreshTokenRepository).deleteById(RefreshToken.keyOf(Role.WARD, 7L));
         verify(refreshTokenRepository).deleteById(RefreshToken.keyOf(Role.GUARDIAN, 3L));
+    }
+
+    @Test
+    void 삭제_순서는_알림_피보호자_보호자_토큰_순이다() {
+        User user = mock(User.class);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+
+        Ward ward = mock(Ward.class);
+        when(ward.getId()).thenReturn(7L);
+        List<Ward> wards = List.of(ward);
+        when(wardRepository.findByGuardianId_Id(3L)).thenReturn(wards);
+
+        withdrawService.withdraw(3L, Role.GUARDIAN);
+
+        InOrder inOrder = inOrder(notificationRepository, wardRepository, userRepository, refreshTokenRepository);
+        inOrder.verify(notificationRepository).deleteByRecipientTypeAndRecipientId(RecipientType.WARD, 7L);
+        inOrder.verify(notificationRepository).deleteByRecipientTypeAndRecipientId(RecipientType.GUARDIAN, 3L);
+        inOrder.verify(wardRepository).deleteAll(wards);
+        inOrder.verify(userRepository).delete(user);
+        inOrder.verify(refreshTokenRepository).deleteById(RefreshToken.keyOf(Role.WARD, 7L));
+        inOrder.verify(refreshTokenRepository).deleteById(RefreshToken.keyOf(Role.GUARDIAN, 3L));
     }
 }
