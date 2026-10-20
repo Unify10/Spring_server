@@ -5,8 +5,6 @@ import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
-import com.unify.onyak.global.error.CustomException;
-import com.unify.onyak.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
