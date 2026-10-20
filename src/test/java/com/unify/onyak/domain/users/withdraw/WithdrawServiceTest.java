@@ -8,13 +8,13 @@ import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.withdraw.error.exception.WithdrawForbiddenException;
-import com.unify.onyak.domain.users.withdraw.error.exception.WithdrawUserNotFoundException;
 import com.unify.onyak.domain.users.withdraw.service.WithdrawService;
 import com.unify.onyak.domain.users.withdraw.service.impl.WithdrawServiceImpl;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.unify.onyak.domain.users.auth.error.exception.UserIdNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +53,8 @@ class WithdrawServiceTest {
     void 존재하지_않는_사용자면_예외를_던진다() {
         when(userRepository.findById(3L)).thenReturn(Optional.empty());
 
-        assertThrows(WithdrawUserNotFoundException.class,
+    // 테스트의 assertThrows 클래스 교체
+        assertThrows(UserIdNotFoundException.class,
                 () -> withdrawService.withdraw(3L, Role.GUARDIAN));
 
         verify(userRepository, never()).delete(any());

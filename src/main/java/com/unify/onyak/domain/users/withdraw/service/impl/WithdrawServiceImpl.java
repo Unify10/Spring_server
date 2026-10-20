@@ -8,7 +8,7 @@ import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.withdraw.error.exception.WithdrawForbiddenException;
-import com.unify.onyak.domain.users.withdraw.error.exception.WithdrawUserNotFoundException;
+import com.unify.onyak.domain.users.auth.error.exception.UserIdNotFoundException;
 import com.unify.onyak.domain.users.withdraw.service.WithdrawService;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
@@ -34,7 +34,7 @@ public class WithdrawServiceImpl implements WithdrawService {
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(WithdrawUserNotFoundException::new);
+                .orElseThrow(UserIdNotFoundException::new);
 
         List<Ward> wards = wardRepository.findByGuardianId_Id(userId);
 
