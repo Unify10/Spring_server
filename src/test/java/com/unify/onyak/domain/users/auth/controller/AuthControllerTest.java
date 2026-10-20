@@ -1,7 +1,5 @@
 package com.unify.onyak.domain.users.auth.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.unify.onyak.domain.users.auth.dto.request.SignUpRequest;
 import com.unify.onyak.domain.users.auth.entity.EmailVerification;
 import com.unify.onyak.domain.users.auth.entity.Gender;
@@ -16,6 +14,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -32,8 +31,8 @@ class AuthControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
     @Autowired private EmailVerificationRepository emailVerificationRepository;
+    @Autowired private ObjectMapper objectMapper;   // 스프링 설정(SNAKE_CASE)이 적용된 매퍼
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     @DisplayName("푸시 알림 필드가 누락되어 가입 요청을 보내도 기본값 true로 회원가입에 성공")

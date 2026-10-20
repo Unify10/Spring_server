@@ -1,10 +1,10 @@
 package com.unify.onyak.domain.users.profile.dto.request;
 
 public record SettingEditRequest(
-        Boolean medication_push_enabled,
+        Boolean medicationPushEnabled,
 
-        Boolean sos_push_enabled,
+        Boolean sosPushEnabled,
 
-        Boolean marketing_push_enabled
+        Boolean marketingPushEnabled
 ) {
 }

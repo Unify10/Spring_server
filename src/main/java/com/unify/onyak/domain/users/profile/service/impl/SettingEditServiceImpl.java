@@ -23,9 +23,9 @@ public class SettingEditServiceImpl implements SettingEditService {
                 .orElseThrow(UserNotFound::new);
 
         user.updateSettings(
-                request.medication_push_enabled(),
-                request.sos_push_enabled(),
-                request.marketing_push_enabled()
+                request.medicationPushEnabled(),
+                request.sosPushEnabled(),
+                request.marketingPushEnabled()
         );
 
         return SettingEditResponse.builder()

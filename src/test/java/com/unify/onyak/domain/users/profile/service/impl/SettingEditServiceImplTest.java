@@ -33,7 +33,7 @@ class SettingEditServiceImplTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired private ObjectMapper objectMapper;   // 스프링 설정(SNAKE_CASE)이 적용된 매퍼
     private User testUser;
     private UserDetails testUserDetails;
 
