@@ -29,6 +29,7 @@ CREATE TABLE users (
                        is_pregnant BOOLEAN,
                        medication_push_enabled BOOLEAN NOT NULL DEFAULT true,
                        sos_push_enabled BOOLEAN NOT NULL DEFAULT true,
+                       marketing_push_enabled BOOLEAN NOT NULL DEFAULT true,
                        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                        CHECK (password_hash IS NOT NULL OR google_id IS NOT NULL)
