@@ -7,6 +7,7 @@ import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.wards.auth.dto.request.WardSignUpRequest;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
+import com.unify.onyak.domain.wards.auth.error.exception.GuardianRoleRequiredException;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -25,7 +26,7 @@ public class WardSignUpServiceImpl implements WardSignUpService {
     public WardSignUpResponse signUp(CustomUserDetails userDetails, WardSignUpRequest request){
 
         if (!Role.GUARDIAN.name().equals(userDetails.getRoleName())) {
-            throw new RuntimeException();
+            throw new GuardianRoleRequiredException();
         }
 
         User guardian = userRepository.findById(userDetails.getUserId())
