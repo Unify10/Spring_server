@@ -55,9 +55,12 @@ public class User extends BaseTimeEntity {
     @Column(name = "sos_push_enabled", nullable = false)
     private Boolean sosPushEnabled = true;
 
+    @Column(name = "marketing_push_enabled", nullable = false)
+    private Boolean marketingPushEnabled = true;
+
     public static User createLocal(String email, String passwordHash, String name, String phone,
                                     LocalDate birthDate, Float weight, Float height, Gender gender,
-                                    Boolean medicationPushEnabled, Boolean sosPushEnabled) {
+                                    Boolean medicationPushEnabled, Boolean sosPushEnabled, Boolean marketingPushEnabled) {
         return new User(
                 null,
                 email,
@@ -72,7 +75,17 @@ public class User extends BaseTimeEntity {
                 gender,
                 null,
                 medicationPushEnabled,
-                sosPushEnabled
+                sosPushEnabled,
+                marketingPushEnabled
         );
+    }
+
+    public void updateSettings(
+            Boolean medicationPushEnabled,
+            Boolean sosPushEnabled,
+            Boolean marketingPushEnabled) {
+        if(medicationPushEnabled != null) this.medicationPushEnabled = medicationPushEnabled;
+        if(sosPushEnabled != null) this.sosPushEnabled = sosPushEnabled;
+        if(marketingPushEnabled != null) this.marketingPushEnabled = marketingPushEnabled;
     }
 }
