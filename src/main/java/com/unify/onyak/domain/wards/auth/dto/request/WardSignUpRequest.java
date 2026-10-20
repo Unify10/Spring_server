@@ -1,7 +1,6 @@
 package com.unify.onyak.domain.wards.auth.dto.request;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
-import com.unify.onyak.domain.users.auth.entity.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,12 +24,12 @@ public record WardSignUpRequest(
         Gender gender,
 
         @NotNull
-        boolean isPregnant,
+        Boolean isPregnant,
 
         @NotNull
-        boolean medicationPushEnabled,
+        Boolean medicationPushEnabled,
 
         @NotNull
-        boolean sosPushEnabled
+        Boolean sosPushEnabled
 ){
 }
