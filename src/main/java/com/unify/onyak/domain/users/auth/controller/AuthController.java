@@ -11,6 +11,7 @@ import com.unify.onyak.domain.users.auth.dto.request.EmailSendRequest;
 import com.unify.onyak.domain.users.auth.dto.request.EmailVerifyRequest;
 import com.unify.onyak.domain.users.auth.dto.request.SignUpRequest;
 import com.unify.onyak.domain.users.auth.dto.response.SignUpResponse;
+import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -34,7 +35,7 @@ public class AuthController {
     // 회원가입
     @PostMapping("/signup")
     public ApiResponse<SignUpResponse> signUp(@RequestBody @Valid SignUpRequest request) {
-        return ApiResponse.ok(userSignUpService.signUp(request));
+        return ApiResponse.created(userSignUpService.signUp(request));
     }
 
     // 인증 이메일 보냄
@@ -58,7 +59,7 @@ public class AuthController {
 
     // 토큰 재발급
     @PostMapping("/refresh")
-    public ApiResponse<LoginResponse> refresh(@RequestBody @Valid RefreshRequest request) {
+    public ApiResponse<TokenResponse> refresh(@RequestBody @Valid RefreshRequest request) {
         return ApiResponse.ok(authService.refresh(request));
     }
 

@@ -5,8 +5,10 @@ public record SignUpResponse(
 
         String email,
 
-        String name
+        String name,
 
-        //  jwt 로직 완성 후 accessToken, RefreshToken 전달 예정
+        String accessToken,
+
+        String refreshToken
 ) {
 }
