@@ -11,11 +11,13 @@ import com.unify.onyak.domain.wards.auth.error.exception.GuardianRoleRequiredExc
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.domain.wards.auth.service.impl.WardSignUpServiceImpl;
+import com.unify.onyak.domain.wards.link_codes.response.LinkCodeResponse;
 import com.unify.onyak.domain.wards.link_codes.service.LinkCodeService;
 import com.unify.onyak.global.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.Optional;
 
@@ -35,6 +37,7 @@ class WardSignUpServiceTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         wardRepository = mock(WardRepository.class);
+        linkCodeService = mock(LinkCodeService.class);
         wardSignUpService = new WardSignUpServiceImpl(userRepository, wardRepository, linkCodeService);
     }
 
@@ -43,13 +46,21 @@ class WardSignUpServiceTest {
         CustomUserDetails guardianDetails = new CustomUserDetails(1L, "guardian", null, "ROLE_GUARDIAN");
         User guardian = mock(User.class);
         when(userRepository.findById(1L)).thenReturn(Optional.of(guardian));
+        when(linkCodeService.createLinkCode(any(Ward.class)))
+                .thenReturn(new LinkCodeResponse(
+                        "123456",
+                        "qr-token",
+                        OffsetDateTime.now().plusMinutes(5)
+                ));
 
         WardSignUpRequest request = validRequest();
         WardSignUpResponse response = wardSignUpService.signUp(guardianDetails, request);
 
         verify(userRepository).findById(1L);
         verify(wardRepository).save(any(Ward.class));
+        verify(linkCodeService).createLinkCode(any(Ward.class));
         assertEquals("피보호자", response.name());
+        assertEquals("123456", response.linkCodeResponse().code());
     }
 
     @Test
