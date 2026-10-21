@@ -2,7 +2,7 @@ package com.unify.onyak.domain.users.auth;
 
 import com.unify.onyak.domain.users.auth.controller.AuthController;
 import com.unify.onyak.domain.users.auth.dto.request.RefreshRequest;
-import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
 import com.unify.onyak.domain.users.auth.entity.RefreshToken;
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.error.exception.InvalidTokenException;
@@ -63,14 +63,17 @@ class RefreshTest {
 
     @Test
     void 컨트롤러는_공개경로로_토큰을_재발급해_응답한다() throws Exception {
-        when(authService.refresh(any())).thenReturn(new LoginResponse("new-access", "new-refresh"));
+        when(authService.refresh(any())).thenReturn(new TokenResponse("new-access", "new-refresh"));
 
         mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refresh_token\":\"old\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.access_token").value("new-access"))
-                .andExpect(jsonPath("$.data.refresh_token").value("new-refresh"));
+                .andExpect(jsonPath("$.data.refresh_token").value("new-refresh"))
+                // refresh 응답은 토큰 2개만 (user_id·email·name·role 없음)
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data.user_id").doesNotExist());
     }
 
     @Test
@@ -86,7 +89,7 @@ class RefreshTest {
         String old = jwtProvider.generateRefreshToken(7L, Role.WARD);
         when(repository.findById("WARD:7")).thenReturn(Optional.of(new RefreshToken(7L, Role.WARD, old, REFRESH_EXP)));
 
-        LoginResponse response = service.refresh(new RefreshRequest(old));
+        TokenResponse response = service.refresh(new RefreshRequest(old));
 
         assertEquals(7L, jwtProvider.getUserId(response.accessToken()));
         assertEquals(Role.WARD, jwtProvider.getRole(response.refreshToken()));
