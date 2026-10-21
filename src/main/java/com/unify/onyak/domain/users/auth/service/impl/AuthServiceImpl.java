@@ -3,6 +3,7 @@ package com.unify.onyak.domain.users.auth.service.impl;
 import com.unify.onyak.domain.users.auth.dto.request.LoginRequest;
 import com.unify.onyak.domain.users.auth.dto.request.RefreshRequest;
 import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
 import com.unify.onyak.domain.users.auth.entity.RefreshToken;
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
@@ -26,11 +27,21 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse login(LoginRequest request) {
         User user = userValidationPolicy.validateLogin(request.email(), request.password());
 
-        return issueTokens(user.getId(), Role.GUARDIAN);
+        Role role = Role.GUARDIAN;
+        TokenResponse tokens = issueTokens(user.getId(), role);
+
+        return new LoginResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                role,
+                tokens.accessToken(),
+                tokens.refreshToken()
+        );
     }
 
     @Override
-    public LoginResponse refresh(RefreshRequest request) {
+    public TokenResponse refresh(RefreshRequest request) {
         String refreshToken = request.refreshToken();
 
         jwtProvider.validateToken(refreshToken, "refresh");
@@ -52,7 +63,8 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenRepository.deleteById(RefreshToken.keyOf(role, userId));
     }
 
-    private LoginResponse issueTokens(Long userId, Role role) {
+    @Override
+    public TokenResponse issueTokens(Long userId, Role role) {
         String accessToken = jwtProvider.generateAccessToken(userId, role);
         String refreshToken = jwtProvider.generateRefreshToken(userId, role);
 
@@ -63,6 +75,6 @@ public class AuthServiceImpl implements AuthService {
                 jwtProvider.getRefreshTokenExpTime()
         ));
 
-        return new LoginResponse(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken);
     }
 }

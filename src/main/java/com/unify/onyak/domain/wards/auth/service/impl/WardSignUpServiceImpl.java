@@ -10,6 +10,8 @@ import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.error.exception.GuardianRoleRequiredException;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
+import com.unify.onyak.domain.wards.link_codes.response.LinkCodeResponse;
+import com.unify.onyak.domain.wards.link_codes.service.LinkCodeService;
 import com.unify.onyak.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,10 @@ public class WardSignUpServiceImpl implements WardSignUpService {
 
     private final UserRepository userRepository;
     private final WardRepository wardRepository;
+    private final LinkCodeService linkCodeService;
 
-    @Transactional
     @Override
+    @Transactional
     public WardSignUpResponse signUp(CustomUserDetails userDetails, WardSignUpRequest request){
 
         if (!Role.GUARDIAN.name().equals(userDetails.getRoleName())) {
@@ -47,7 +50,9 @@ public class WardSignUpServiceImpl implements WardSignUpService {
 
         wardRepository.save(ward);
 
-        return new WardSignUpResponse(ward.getId(),ward.getName());
+        LinkCodeResponse linkCodeResponse = linkCodeService.createLinkCode(ward);
+
+        return new WardSignUpResponse(ward.getId(),ward.getName(),linkCodeResponse);
     }
 
 }
