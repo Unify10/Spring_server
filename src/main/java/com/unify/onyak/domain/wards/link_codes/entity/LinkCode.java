@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
 
@@ -27,6 +29,7 @@ public class LinkCode {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ward_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Ward wardId;
 
     @Column(length = 6, nullable = false)
