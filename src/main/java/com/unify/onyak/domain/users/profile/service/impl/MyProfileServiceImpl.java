@@ -1,8 +1,10 @@
 package com.unify.onyak.domain.users.profile.service.impl;
 
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
 import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +22,11 @@ public class MyProfileServiceImpl implements MyProfileService {
 
     @Transactional(readOnly = true)
     @Override
-    public MyProfileResponse getMyProfile(Long userId) {
+    public MyProfileResponse getMyProfile(Long userId, Role role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFound::new);
+
+        if(role != Role.GUARDIAN) throw new UserForbidden();
 
         return MyProfileResponse.builder()
                 .userId(user.getId())

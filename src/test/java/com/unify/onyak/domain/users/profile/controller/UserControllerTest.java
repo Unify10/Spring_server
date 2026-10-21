@@ -1,8 +1,10 @@
 package com.unify.onyak.domain.users.profile.controller;
 
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
 import com.unify.onyak.domain.users.profile.service.SettingEditService;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -81,7 +83,7 @@ class UserControllerTest {
     @Test
     void 인증된_사용자는_자신의_프로필을_snake_case_본문으로_조회한다() throws Exception {
         CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
-        when(myProfileService.getMyProfile(3L))
+        when(myProfileService.getMyProfile(3L, Role.GUARDIAN))
                 .thenReturn(MyProfileResponse.builder()
                         .userId(3L)
                         .email("a@a.com")
@@ -109,7 +111,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.is_pregnant").value(false));
 
         // 서비스에 넘기는 userId가 요청이 아니라 인증 principal에서 온 값인지
-        verify(myProfileService).getMyProfile(3L);
+        verify(myProfileService).getMyProfile(3L,  Role.GUARDIAN);
     }
 
     @Test
@@ -118,5 +120,17 @@ class UserControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(myProfileService);
+    }
+
+    @Test
+    void 보호자가_아닌_사용자가_내정보조회_하면_403을_반환한다() throws Exception {
+        CustomUserDetails ward = new CustomUserDetails(3L, "a@a.com", null, "ROLE_WARD");
+        when(myProfileService.getMyProfile(3L, Role.WARD))
+                .thenThrow(new UserForbidden());
+
+        mockMvc.perform(get("/users/me")
+                .with(authentication(new UsernamePasswordAuthenticationToken(
+                        ward, null, ward.getAuthorities()))))
+                .andExpect(status().isForbidden());
     }
 }

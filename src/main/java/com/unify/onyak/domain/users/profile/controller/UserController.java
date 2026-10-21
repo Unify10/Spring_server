@@ -1,5 +1,6 @@
 package com.unify.onyak.domain.users.profile.controller;
 
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
@@ -23,7 +24,7 @@ public class UserController {
     @GetMapping("/me")
     public ApiResponse<MyProfileResponse> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.ok(myProfileService.getMyProfile(userDetails.getUserId()));
+        return ApiResponse.ok(myProfileService.getMyProfile(userDetails.getUserId(), Role.valueOf(userDetails.getRoleName())));
     }
 
     //앱 환경설정 변경
