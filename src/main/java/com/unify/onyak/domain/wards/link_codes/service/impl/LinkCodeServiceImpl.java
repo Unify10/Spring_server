@@ -2,7 +2,7 @@ package com.unify.onyak.domain.wards.link_codes.service.impl;
 
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.link_codes.entity.LinkCode;
-import com.unify.onyak.domain.wards.link_codes.reposiotry.LinkCodeRepository;
+import com.unify.onyak.domain.wards.link_codes.repository.LinkCodeRepository;
 import com.unify.onyak.domain.wards.link_codes.response.LinkCodeResponse;
 import com.unify.onyak.domain.wards.link_codes.service.LinkCodeService;
 import lombok.RequiredArgsConstructor;
