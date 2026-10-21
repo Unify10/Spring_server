@@ -62,7 +62,7 @@ class EvidenceCardServiceImplTest {
                 analysisResultRepository, drugApiClient, JsonMapper.builder().build(), transactionManager);
 
         LocalDate birth = KoreanDate.today().minusYears(78);
-        ward = ward(WARD_ID, GUARDIAN_ID, java.sql.Date.valueOf(birth), false, true);
+        ward = ward(WARD_ID, GUARDIAN_ID, birth, false, true);
         when(wardRepository.findById(WARD_ID)).thenReturn(Optional.of(ward));
 
         Drug d1 = drug(1L, "195700020", "타이레놀정500mg", List.of("아세트아미노펜"));

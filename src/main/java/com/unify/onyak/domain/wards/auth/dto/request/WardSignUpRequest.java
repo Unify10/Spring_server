@@ -4,7 +4,7 @@ import com.unify.onyak.domain.users.auth.entity.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public record WardSignUpRequest(
 
@@ -12,7 +12,7 @@ public record WardSignUpRequest(
         String name,
 
         @NotNull
-        Date birthDate,
+        LocalDate birthDate,
 
         @NotNull
         Float weight,
