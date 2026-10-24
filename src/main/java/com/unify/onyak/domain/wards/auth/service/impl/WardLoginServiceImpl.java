@@ -40,7 +40,7 @@ public class WardLoginServiceImpl implements WardLoginService {
                 refreshToken,
                 jwtProvider.getRefreshTokenExpTime()
         ));
-
+        
         return new LoginResponse(accessToken, refreshToken);
     }
 }
