@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -78,9 +79,12 @@ class WardAuthControllerTest {
                                 guardian, null, guardian.getAuthorities())))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validJson()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.link_code_response.code").value("123456"))
-                .andExpect(jsonPath("$.link_code_response.qr_token").value("qr-token"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.ward_id").value(10))
+                .andExpect(jsonPath("$.data.name").value("피보호자"))
+                .andExpect(jsonPath("$.data.link_code_response.code").value("123456"))
+                .andExpect(jsonPath("$.data.link_code_response.qr_token").value("qr-token"));
 
         verify(wardSignUpService).signUp(any(CustomUserDetails.class), any());
     }
@@ -125,7 +129,7 @@ class WardAuthControllerTest {
         return """
                 {
                   "name": "피보호자",
-                  "birth_date": "2010-01-01T00:00:00.000Z",
+                  "birth_date": "2010-01-01",
                   "weight": 50.0,
                   "height": 160.0,
                   "gender": "F",

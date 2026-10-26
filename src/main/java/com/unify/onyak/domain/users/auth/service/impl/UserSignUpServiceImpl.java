@@ -3,9 +3,12 @@ package com.unify.onyak.domain.users.auth.service.impl;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
 import com.unify.onyak.domain.users.auth.dto.request.SignUpRequest;
 import com.unify.onyak.domain.users.auth.dto.response.SignUpResponse;
+import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
+import com.unify.onyak.domain.users.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ public class UserSignUpServiceImpl implements UserSignUpService {
     private final UserRepository userRepository;
     private final UserValidationPolicy userValidationPolicy;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
     @Transactional
     @Override
@@ -50,6 +54,15 @@ public class UserSignUpServiceImpl implements UserSignUpService {
 
         userRepository.save(user);
 
-        return new SignUpResponse(user.getId(), user.getEmail(), user.getName());
+        // 가입 직후 자동 로그인: GUARDIAN 토큰 발급 + Redis refresh 저장
+        TokenResponse tokens = authService.issueTokens(user.getId(), Role.GUARDIAN);
+
+        return new SignUpResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                tokens.accessToken(),
+                tokens.refreshToken()
+        );
     }
 }

@@ -62,7 +62,7 @@ class EvidenceCardServiceImplTest {
                 analysisResultRepository, drugApiClient, JsonMapper.builder().build(), transactionManager);
 
         LocalDate birth = KoreanDate.today().minusYears(78);
-        ward = ward(WARD_ID, GUARDIAN_ID, java.sql.Date.valueOf(birth), false, true);
+        ward = ward(WARD_ID, GUARDIAN_ID, birth, false, true);
         when(wardRepository.findById(WARD_ID)).thenReturn(Optional.of(ward));
 
         Drug d1 = drug(1L, "195700020", "타이레놀정500mg", List.of("아세트아미노펜"));
@@ -148,6 +148,62 @@ class EvidenceCardServiceImplTest {
         when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of());
 
         assertThat(service.getEvidenceCard(wardUser(WARD_ID), WARD_ID).level()).isEqualTo("EMPTY");
+    }
+
+    @Test
+    void 요청했는데_응답에_없는_약은_lookupFailed_카드로_남기고_스냅샷도_저장한다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true)))
+                .thenReturn(List.of(tylenol, partner, vitamin));
+        // FastAPI 가 15(partner)를 빠뜨린 응답
+        when(drugApiClient.cabinetCheck(any())).thenReturn(new CabinetCheckResponse(
+                "OK", "문제 없음",
+                List.of(result("12", "195700020", List.of()), result("20", "300000001", List.of())),
+                List.of(), List.of(), "참고 정보"));
+
+        EvidenceCardResponse card = service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+
+        assertThat(card.medications()).extracting(CardMedication::medicationId).containsExactly(12L, 20L, 15L);
+        CardMedication missing = card.medications().get(2);
+        assertThat(missing.lookupFailed()).isTrue();
+        assertThat(missing.hasWarning()).isFalse();
+        assertThat(missing.drugId()).isEqualTo("200000001");
+        assertThat(missing.itemName()).isEqualTo("테스트병용약정");
+        assertThat(missing.findings()).isEmpty();
+        assertThat(card.medications().subList(0, 2)).extracting(CardMedication::lookupFailed)
+                .containsExactly(false, false);
+
+        assertThat(firstSaved()).extracting(a -> a.getMedication().getId()).containsExactly(12L, 20L, 15L);
+    }
+
+    @Test
+    void 빠진_약도_상호작용에_걸려_있으면_경고로_표시한다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol, partner));
+        when(drugApiClient.cabinetCheck(any())).thenReturn(new CabinetCheckResponse(
+                "DANGER", "헤드라인",
+                List.of(result("12", "195700020", List.of())),
+                List.of(new Interaction("병용금기", "CONTRAINDICATED", List.of("12", "15"),
+                        List.of("타이레놀정500mg", "테스트병용약정"), "간독성")),
+                List.of(), "참고 정보"));
+
+        EvidenceCardResponse card = service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+
+        CardMedication missing = card.medications().get(1);
+        assertThat(missing.medicationId()).isEqualTo(15L);
+        assertThat(missing.lookupFailed()).isTrue();
+        assertThat(missing.hasWarning()).isTrue();
+    }
+
+    @Test
+    void 요청에_없던_key가_응답에_있으면_무시한다() {
+        when(medicationRepository.findAllByWardWithDrug(WARD_ID, List.of(true))).thenReturn(List.of(tylenol));
+        when(drugApiClient.cabinetCheck(any())).thenReturn(new CabinetCheckResponse(
+                "OK", "문제 없음",
+                List.of(result("12", "195700020", List.of()), result("999", "999999999", List.of())),
+                List.of(), List.of(), "참고 정보"));
+
+        EvidenceCardResponse card = service.getEvidenceCard(guardian(GUARDIAN_ID), WARD_ID);
+
+        assertThat(card.medications()).extracting(CardMedication::medicationId).containsExactly(12L);
     }
 
     private CabinetCheckResponse dangerResponse(String tylenolFindingKey) {

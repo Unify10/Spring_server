@@ -6,7 +6,7 @@ import com.unify.onyak.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @AllArgsConstructor
@@ -27,7 +27,7 @@ public class Ward extends BaseTimeEntity {
     private String name;
 
     @Column(name="birth_date",nullable = false)
-    private Date birthDate;
+    private LocalDate birthDate;
 
     @Column(nullable = false)
     private Float weight;
@@ -48,7 +48,7 @@ public class Ward extends BaseTimeEntity {
     @Column(name = "sos_push_enabled",nullable = false)
     private Boolean sosPushEnabled = true;
 
-    public static Ward createLocal(User guardianId, String name, Date birthDate, Float weight, Float height,
+    public static Ward createLocal(User guardianId, String name, LocalDate birthDate, Float weight, Float height,
                             Gender gender, Boolean isPregnant, Boolean medicationPushEnabled,
                             Boolean sosPushEnabled){
         return new Ward(

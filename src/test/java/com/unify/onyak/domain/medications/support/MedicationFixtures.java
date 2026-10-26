@@ -9,7 +9,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Date;
 import java.util.List;
 
 import static org.mockito.Mockito.lenient;
@@ -30,7 +29,7 @@ public final class MedicationFixtures {
     }
 
     /** guardianId 보호자가 관리하는 피보호자. */
-    public static Ward ward(long wardId, long guardianId, Date birthDate, boolean pregnant, boolean pushEnabled) {
+    public static Ward ward(long wardId, long guardianId, LocalDate birthDate, boolean pregnant, boolean pushEnabled) {
         User guardian = mock(User.class);
         lenient().when(guardian.getId()).thenReturn(guardianId);
         Ward ward = mock(Ward.class);
@@ -44,7 +43,7 @@ public final class MedicationFixtures {
     }
 
     public static Ward ward(long wardId, long guardianId) {
-        return ward(wardId, guardianId, java.sql.Date.valueOf("1948-03-01"), false, true);
+        return ward(wardId, guardianId, LocalDate.of(1948, 3, 1), false, true);
     }
 
     public static Drug drug(long id, String itemSeq, String name, List<String> ingredients) {
