@@ -1,6 +1,7 @@
 package com.unify.onyak.domain.wards.auth;
 
 import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.wards.auth.controller.WardAuthController;
 import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
@@ -32,7 +33,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(WardAuthController.class)
 @Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
@@ -106,7 +106,14 @@ class WardAuthControllerTest {
     @Test
     void 피보호자는_연동코드로_로그인할_수_있다() throws Exception {
         when(wardLoginService.login(any(WardLoginRequest.class)))
-                .thenReturn(new LoginResponse("access-token", "refresh-token"));
+                .thenReturn(new LoginResponse(
+                        10L,
+                        null,
+                        "피보호자",
+                        Role.WARD,
+                        "access-token",
+                        "refresh-token"
+                ));
 
         mockMvc.perform(post("/ward/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -117,8 +124,8 @@ class WardAuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token").value("access-token"))
-                .andExpect(jsonPath("$.refresh_token").value("refresh-token"));
+                .andExpect(jsonPath("$.data.access_token").value("access-token"))
+                .andExpect(jsonPath("$.data.refresh_token").value("refresh-token"));
 
         var captor = forClass(WardLoginRequest.class);
         verify(wardLoginService).login(captor.capture());

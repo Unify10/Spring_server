@@ -4,7 +4,7 @@ import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.link_codes.entity.LinkCode;
 import com.unify.onyak.domain.wards.link_codes.entity.LinkCodeStatus;
-import com.unify.onyak.domain.wards.link_codes.error.exception.InvalidEndDateException;
+import com.unify.onyak.domain.wards.link_codes.error.exception.InvalidLinkCodeException;
 import com.unify.onyak.domain.wards.link_codes.repository.LinkCodeRepository;
 import com.unify.onyak.domain.wards.link_codes.service.VerifyLinkCodeService;
 import com.unify.onyak.domain.wards.link_codes.service.impl.VerifyLinkCodeServiceImpl;
@@ -70,7 +70,7 @@ class VerifyLinkCodeServiceTest {
                 .thenReturn(Optional.of(linkCode));
 
         assertThrows(
-                InvalidEndDateException.class,
+                InvalidLinkCodeException.class,
                 () -> verifyLinkCodeService.verifyLinkCode(
                         new WardLoginRequest("123456", null)
                 )
@@ -82,7 +82,7 @@ class VerifyLinkCodeServiceTest {
     @Test
     void code와_QR토큰이_모두_없으면_예외를_던진다() {
         assertThrows(
-                InvalidEndDateException.class,
+                InvalidLinkCodeException.class,
                 () -> verifyLinkCodeService.verifyLinkCode(
                         new WardLoginRequest(null, null)
                 )
@@ -94,7 +94,7 @@ class VerifyLinkCodeServiceTest {
     @Test
     void code와_QR토큰이_모두_있으면_예외를_던진다() {
         assertThrows(
-                InvalidEndDateException.class,
+                InvalidLinkCodeException.class,
                 () -> verifyLinkCodeService.verifyLinkCode(
                         new WardLoginRequest("123456", "qr-token")
                 )
@@ -109,7 +109,7 @@ class VerifyLinkCodeServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(
-                InvalidEndDateException.class,
+                InvalidLinkCodeException.class,
                 () -> verifyLinkCodeService.verifyLinkCode(
                         new WardLoginRequest("999999", null)
                 )
