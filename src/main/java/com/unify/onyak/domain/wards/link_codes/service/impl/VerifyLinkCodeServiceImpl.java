@@ -3,7 +3,7 @@ package com.unify.onyak.domain.wards.link_codes.service.impl;
 import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.link_codes.entity.LinkCode;
-import com.unify.onyak.domain.wards.link_codes.error.exception.InvalidEndDateException;
+import com.unify.onyak.domain.wards.link_codes.error.exception.InvalidLinkCodeException;
 import com.unify.onyak.domain.wards.link_codes.repository.LinkCodeRepository;
 import com.unify.onyak.domain.wards.link_codes.service.VerifyLinkCodeService;
 import lombok.RequiredArgsConstructor;
@@ -29,24 +29,24 @@ public class VerifyLinkCodeServiceImpl implements VerifyLinkCodeService {
         // 코드인지 qr토큰인지 확인
 
         if(hasCode==hasQrToken){
-            throw new InvalidEndDateException();
+            throw new InvalidLinkCodeException();
         } // 둘 중 하나만 입력되도록 예외처리
 
         LinkCode linkCode;
 
         if(hasCode){
             linkCode = linkCodeRepository.findByCodeAndStatus(request.code(),PENDING)
-                    .orElseThrow(InvalidEndDateException::new);
+                    .orElseThrow(InvalidLinkCodeException::new);
         } else{
             linkCode = linkCodeRepository.findByQrTokenAndStatus(request.qrToken(), PENDING)
-                    .orElseThrow(InvalidEndDateException::new);
+                    .orElseThrow(InvalidLinkCodeException::new);
         }
 
         OffsetDateTime now = OffsetDateTime.now();
 
         if(linkCode.isExpired(now)){
             linkCode.expire();
-            throw new InvalidEndDateException();
+            throw new InvalidLinkCodeException();
         } // 만료 확인
 
         linkCode.markUsed(now); // 연동 코드 사용 처리
