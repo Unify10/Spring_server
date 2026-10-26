@@ -30,9 +30,9 @@ public class WardAuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(
+    public ApiResponse<LoginResponse> login(
            @RequestBody WardLoginRequest request
     ){
-        return wardLoginService.login(request);
+        return ApiResponse.ok(wardLoginService.login(request));
     }
 }
