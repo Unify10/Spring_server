@@ -88,4 +88,12 @@ public class User extends BaseTimeEntity {
         if(sosPushEnabled != null) this.sosPushEnabled = sosPushEnabled;
         if(marketingPushEnabled != null) this.marketingPushEnabled = marketingPushEnabled;
     }
+
+    public void updateInformation(
+            String phone,
+            String password
+    ){
+        if(phone != null) this.phone = phone;
+        if(password != null) this.passwordHash = password;
+    }
 }

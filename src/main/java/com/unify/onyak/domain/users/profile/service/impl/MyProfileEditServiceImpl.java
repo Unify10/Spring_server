@@ -1,0 +1,41 @@
+package com.unify.onyak.domain.users.profile.service.impl;
+
+import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.domain.users.auth.repository.UserRepository;
+import com.unify.onyak.domain.users.profile.dto.request.MyProfileEditRequest;
+import com.unify.onyak.domain.users.profile.dto.response.MyProfileEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
+import com.unify.onyak.domain.users.profile.service.MyProfileEditService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.Period;
+
+@Service
+@RequiredArgsConstructor
+public class MyProfileEditServiceImpl implements MyProfileEditService {
+
+    private final UserRepository userRepository;
+
+    @Transactional
+    @Override
+    public MyProfileEditResponse editMyProfile(long userId, MyProfileEditRequest request)
+    {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFound::new);
+
+        user.updateInformation(
+                request.phone(),
+                request.password()
+        );
+
+        return MyProfileEditResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .phone(user.getPhone())
+                .build();
+    }
+}
