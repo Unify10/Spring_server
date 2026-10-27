@@ -1,9 +1,11 @@
 package com.unify.onyak.domain.users.profile.service.impl;
 
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.request.MyProfileEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
 import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
 import com.unify.onyak.domain.users.profile.service.MyProfileEditService;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +23,12 @@ public class MyProfileEditServiceImpl implements MyProfileEditService {
 
     @Transactional
     @Override
-    public MyProfileEditResponse editMyProfile(long userId, MyProfileEditRequest request)
+    public MyProfileEditResponse editMyProfile(long userId, Role role, MyProfileEditRequest request)
     {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFound::new);
+
+        if(role != Role.GUARDIAN) throw new UserForbidden();
 
         user.updateInformation(
                 request.phone(),
