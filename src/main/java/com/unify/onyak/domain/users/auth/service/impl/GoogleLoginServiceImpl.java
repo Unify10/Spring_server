@@ -38,15 +38,7 @@ public class GoogleLoginServiceImpl implements GoogleLoginService {
         if (userByGoogleId.isPresent()) {
             User user = userByGoogleId.get();
             TokenResponse tokens = authService.issueTokens(user.getId(), Role.GUARDIAN);
-            return new GoogleLoginResponse(
-                    user.getId(),
-                    user.getEmail(),
-                    user.getName(),
-                    Role.GUARDIAN,
-                    tokens.accessToken(),
-                    tokens.refreshToken(),
-                    false
-            );
+            return toResponse(user, tokens, false);
         }
 
         // 2. 같은 email의 기존 계정 확인
@@ -64,15 +56,7 @@ public class GoogleLoginServiceImpl implements GoogleLoginService {
             }
 
             TokenResponse tokens = authService.issueTokens(user.getId(), Role.GUARDIAN);
-            return new GoogleLoginResponse(
-                    user.getId(),
-                    user.getEmail(),
-                    user.getName(),
-                    Role.GUARDIAN,
-                    tokens.accessToken(),
-                    tokens.refreshToken(),
-                    false
-            );
+            return toResponse(user, tokens, false);
         }
 
         // 3. 신규 가입
@@ -85,14 +69,18 @@ public class GoogleLoginServiceImpl implements GoogleLoginService {
         }
 
         TokenResponse tokens = authService.issueTokens(savedUser.getId(), Role.GUARDIAN);
+        return toResponse(savedUser, tokens, true);
+    }
+
+    private GoogleLoginResponse toResponse(User user, TokenResponse tokens, boolean isNewUser) {
         return new GoogleLoginResponse(
-                savedUser.getId(),
-                savedUser.getEmail(),
-                savedUser.getName(),
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
                 Role.GUARDIAN,
                 tokens.accessToken(),
                 tokens.refreshToken(),
-                true
+                isNewUser
         );
     }
 }

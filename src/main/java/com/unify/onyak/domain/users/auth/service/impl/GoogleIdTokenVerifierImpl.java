@@ -6,12 +6,15 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.unify.onyak.domain.users.auth.dto.GoogleUserInfo;
 import com.unify.onyak.domain.users.auth.error.exception.GoogleTokenInvalidException;
 import com.unify.onyak.domain.users.auth.service.GoogleIdTokenVerifier;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Component
 public class GoogleIdTokenVerifierImpl implements GoogleIdTokenVerifier {
 
@@ -21,6 +24,7 @@ public class GoogleIdTokenVerifierImpl implements GoogleIdTokenVerifier {
 
     private final com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier googleVerifier;
 
+    @Autowired
     public GoogleIdTokenVerifierImpl(@Value("${google.client-ids:}") String clientIdsProperty) {
         this(clientIdsProperty, null);
     }
@@ -29,6 +33,7 @@ public class GoogleIdTokenVerifierImpl implements GoogleIdTokenVerifier {
                                      com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier customVerifier) {
         if (clientIdsProperty == null || clientIdsProperty.trim().isEmpty()) {
             this.clientIds = List.of();
+            log.warn("google.client-ids 가 설정되지 않아 구글 로그인이 모두 거부됩니다. GOOGLE_CLIENT_ID 를 확인하세요.");
         } else {
             this.clientIds = Arrays.stream(clientIdsProperty.split(","))
                     .map(String::trim)
