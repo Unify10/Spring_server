@@ -30,11 +30,6 @@ public class WardLoginAttemptServiceImpl implements WardLoginAttemptService {
             return count != null && Long.parseLong(count) >= 5; // null이 아니고 시도 횟수 5회 이상이면 true 반환
     }
 
-    @Override
-    public void reset(String ip){
-            redisTemplate.delete(keyOf(ip));
-    }
-
     private String keyOf(String ip){
         return "ward:login:attempt:"+ip;
     }

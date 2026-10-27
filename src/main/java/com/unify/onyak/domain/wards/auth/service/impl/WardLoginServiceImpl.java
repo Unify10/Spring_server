@@ -42,8 +42,6 @@ public class WardLoginServiceImpl implements WardLoginService {
 
         TokenResponse token =  authService.issueTokens(ward.getId(),Role.WARD);
 
-        wardLoginAttemptService.reset(clientIp);
-
         return new LoginResponse(
                 ward.getId(),
                 null,
