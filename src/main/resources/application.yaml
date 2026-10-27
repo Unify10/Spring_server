@@ -52,3 +52,5 @@ app:
     notice-url: "https://onyak.app/notice"
     terms-url: "https://onyak.app/terms"
     privacy-url: "https://onyak.app/privacy"
+server:
+  forward-headers-strategy: framework
