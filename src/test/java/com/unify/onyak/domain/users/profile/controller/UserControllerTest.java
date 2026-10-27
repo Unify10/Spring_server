@@ -1,10 +1,13 @@
 package com.unify.onyak.domain.users.profile.controller;
 
 import com.unify.onyak.domain.users.auth.entity.Role;
+import com.unify.onyak.domain.users.profile.dto.request.MyProfileEditRequest;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
+import com.unify.onyak.domain.users.profile.dto.response.MyProfileEditResponse;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
 import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
+import com.unify.onyak.domain.users.profile.service.MyProfileEditService;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
 import com.unify.onyak.domain.users.profile.service.SettingEditService;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -20,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,9 +42,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserControllerTest {
 
     @Autowired MockMvc mockMvc;
+    @Autowired ObjectMapper objectMapper;
     @MockitoBean JwtProvider jwtProvider;
     @MockitoBean SettingEditService settingEditService;
     @MockitoBean private MyProfileService myProfileService;
+    @MockitoBean private MyProfileEditService myProfileEditService;
 
     @Test
     void 인증_없이_환경설정을_변경하면_401이다() throws Exception {
@@ -131,6 +137,49 @@ class UserControllerTest {
         mockMvc.perform(get("/users/me")
                 .with(authentication(new UsernamePasswordAuthenticationToken(
                         ward, null, ward.getAuthorities()))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 보호자의_내정보수정이_성공적으로_완료된다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+
+        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", null);
+
+        when(myProfileEditService.editMyProfile(eq(3L), eq(Role.GUARDIAN), any(MyProfileEditRequest.class)))
+                .thenReturn(MyProfileEditResponse.builder()
+                        .userId(3L)
+                        .email("a@a.com")
+                        .name("test")
+                        .phone("010-1111-1111")
+                        .build());
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content((objectMapper.writeValueAsString(request)))
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.user_id").value(3))
+                .andExpect(jsonPath("$.data.email").value("a@a.com"))
+                .andExpect(jsonPath("$.data.name").value("test"))
+                .andExpect(jsonPath("$.data.phone").value("010-1111-1111"));
+    }
+
+    @Test
+    void 보호자가_아닌_사용자는_내정보수정_하면_403을_반환한다() throws Exception {
+        CustomUserDetails ward = new CustomUserDetails(3L, "a@a.com", null, "ROLE_WARD");
+
+        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", null);
+
+        when(myProfileEditService.editMyProfile(eq(3L), eq(Role.WARD), any(MyProfileEditRequest.class)))
+                .thenThrow(new UserForbidden());
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content((objectMapper.writeValueAsString(request)))
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                ward, null, ward.getAuthorities()))))
                 .andExpect(status().isForbidden());
     }
 }
