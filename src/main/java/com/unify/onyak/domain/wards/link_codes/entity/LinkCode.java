@@ -14,6 +14,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.OffsetDateTime;
 
+import static com.unify.onyak.domain.wards.link_codes.entity.LinkCodeStatus.EXPIRED;
 import static com.unify.onyak.domain.wards.link_codes.entity.LinkCodeStatus.PENDING;
 
 @Entity
@@ -74,4 +75,27 @@ public class LinkCode {
                 null
         );
     }
+
+    public boolean isExpired(OffsetDateTime now){
+        return !expiresAt.isAfter(now);
+        // 만료되면 true를 반환
+    }
+
+    public void increaseAttemptCount(){
+        attemptCount++;
+
+        if(attemptCount>=5){
+            status = EXPIRED;
+        }
+    }
+
+    public void expire(){
+        status = EXPIRED;
+    }
+
+    public void markUsed(OffsetDateTime usedAt){
+        status = LinkCodeStatus.USED;
+        this.usedAt = usedAt;
+    }
+
 }
