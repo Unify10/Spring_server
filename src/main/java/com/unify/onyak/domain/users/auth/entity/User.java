@@ -60,6 +60,7 @@ public class User extends BaseTimeEntity {
 
     public static User createLocal(String email, String passwordHash, String name, String phone,
                                     LocalDate birthDate, Float weight, Float height, Gender gender,
+                                    Boolean isPregnant,
                                     Boolean medicationPushEnabled, Boolean sosPushEnabled, Boolean marketingPushEnabled) {
         return new User(
                 null,
@@ -73,7 +74,7 @@ public class User extends BaseTimeEntity {
                 weight,
                 height,
                 gender,
-                null,
+                isPregnant,
                 medicationPushEnabled,
                 sosPushEnabled,
                 marketingPushEnabled

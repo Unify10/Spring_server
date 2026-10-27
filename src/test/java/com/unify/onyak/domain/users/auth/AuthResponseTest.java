@@ -140,12 +140,41 @@ class AuthResponseTest {
 
         SignUpResponse response = new UserSignUpServiceImpl(userRepository, policy, passwordEncoder, auth)
                 .signUp(new SignUpRequest("a@a.com", "password1234", "password1234", "홍길동", "010-1234-5678",
-                        LocalDate.of(2000, 1, 1), 60.5f, 170.0f, Gender.M, null, null, null));
+                        LocalDate.of(2000, 1, 1), 60.5f, 170.0f, Gender.M, null, null, null, null));
 
         verify(auth).issueTokens(eq(7L), eq(Role.GUARDIAN));
         assertThat(response.userId()).isEqualTo(7L);
         assertThat(response.email()).isEqualTo("a@a.com");
         assertThat(response.accessToken()).isEqualTo("access");
         assertThat(response.refreshToken()).isEqualTo("refresh");
+    }
+
+    @Test
+    void 서비스_가입은_isPregnant_값을_저장한다() {
+        UserRepository userRepository = mock(UserRepository.class);
+        UserValidationPolicy policy = mock(UserValidationPolicy.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        AuthService auth = mock(AuthService.class);
+        when(passwordEncoder.encode(any())).thenReturn("hash");
+        when(auth.issueTokens(any(), any())).thenReturn(new TokenResponse("access", "refresh"));
+
+        UserSignUpServiceImpl service = new UserSignUpServiceImpl(userRepository, policy, passwordEncoder, auth);
+
+        // 1. isPregnant = true 인 경우
+        SignUpRequest requestWithPregnant = new SignUpRequest("a@a.com", "password1234", "password1234", "홍길동", "010-1234-5678",
+                LocalDate.of(2000, 1, 1), 60.5f, 170.0f, Gender.F, true, null, null, null);
+        service.signUp(requestWithPregnant);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getIsPregnant()).isTrue();
+
+        // 2. isPregnant = null 인 경우
+        SignUpRequest requestWithoutPregnant = new SignUpRequest("b@b.com", "password1234", "password1234", "홍길동", "010-1234-5678",
+                LocalDate.of(2000, 1, 1), 60.5f, 170.0f, Gender.M, null, null, null, null);
+        service.signUp(requestWithoutPregnant);
+
+        verify(userRepository, org.mockito.Mockito.times(2)).save(captor.capture());
+        assertThat(captor.getValue().getIsPregnant()).isNull();
     }
 }
