@@ -27,6 +27,11 @@ spring:
           auth: true
           starttls:
             enable: true
+  servlet:
+    multipart:
+      # 약 포장 사진 (/drugs/ocr, /drugs/analyze). 폰 카메라 원본이 수 MB 라 기본값 1MB 로는 막힌다
+      max-file-size: 10MB
+      max-request-size: 11MB
   data:
     redis:
       host: ${REDIS_HOST:localhost}
