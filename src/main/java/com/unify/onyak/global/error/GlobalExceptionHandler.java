@@ -6,9 +6,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+
+import java.util.List;
 
 @Slf4j
 @RestControllerAdvice
@@ -49,6 +56,44 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST, "INVALID_PARAMETER",
                         "요청 값의 형식이 올바르지 않습니다: " + e.getName()));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleMethodValidation(HandlerMethodValidationException e) {// 경로·쿼리 값 제약 위반 (예: /drugs/search?q=a)
+        List<ErrorResponse.FieldErrorDetail> errors = e.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> new ErrorResponse.FieldErrorDetail(
+                                result.getMethodParameter().getParameterName(), error.getDefaultMessage())))
+                .toList();
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.ofParameters(errors));
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<ErrorResponse> handleMissingParameter(Exception e) {// 필수 쿼리·멀티파트 값 누락 (예: q 없이 검색, file 없이 OCR)
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST, "MISSING_PARAMETER", "필수 요청 값이 없습니다: " + missingName(e)));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipart(MultipartException e) {// 업로드 용량 초과, multipart 가 아닌 요청 등
+        if (e instanceof MaxUploadSizeExceededException) {
+            return ResponseEntity
+                    .status(HttpStatus.CONTENT_TOO_LARGE)
+                    .body(ErrorResponse.of(HttpStatus.CONTENT_TOO_LARGE, "FILE_TOO_LARGE", "이미지 용량이 너무 큽니다."));
+        }
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST, "INVALID_MULTIPART", "파일 업로드 형식이 올바르지 않습니다."));
+    }
+
+    private static String missingName(Exception e) {
+        if (e instanceof MissingServletRequestParameterException m) {
+            return m.getParameterName();
+        }
+        return ((MissingServletRequestPartException) e).getRequestPartName();
     }
 
     @ExceptionHandler(Exception.class)

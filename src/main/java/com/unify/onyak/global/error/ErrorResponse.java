@@ -41,14 +41,19 @@ public class ErrorResponse {
     }
 
     public static ErrorResponse ofValidation(List<FieldError> fieldErrors) {
+        return ofParameters(fieldErrors.stream()
+                .map(fe -> new FieldErrorDetail(fe.getField(), fe.getDefaultMessage()))
+                .toList());
+    }
+
+    // 요청 본문 DTO 가 아니라 경로·쿼리 값의 제약 위반도 같은 VALIDATION_ERROR 로 내보낸다
+    public static ErrorResponse ofParameters(List<FieldErrorDetail> errors) {
         return ErrorResponse.builder()
                 .timeStamp(LocalDateTime.now())
                 .errorCode("VALIDATION_ERROR")
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message("입력값이 올바르지 않습니다.")
-                .errors(fieldErrors.stream()
-                        .map(fe -> new FieldErrorDetail(fe.getField(), fe.getDefaultMessage()))
-                        .toList())
+                .errors(errors)
                 .build();
     }
 
