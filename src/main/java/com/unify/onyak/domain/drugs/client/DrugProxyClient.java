@@ -17,6 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriBuilder;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -40,6 +42,7 @@ public class DrugProxyClient {
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
     // OCR 은 CLOVA 호출에, analyze 는 그 뒤 공공데이터 조회(재시도 포함)까지 기다려서 10초로는 모자란다
     static final Duration READ_TIMEOUT = Duration.ofSeconds(30);
+    static final int MAX_LOGGED_ERROR_BYTES = 500;
 
     private final RestClient restClient;
 
@@ -127,6 +130,20 @@ public class DrugProxyClient {
                 .retrieve());
     }
 
+    /**
+     * 오류 응답 본문을 로그용으로 앞부분만 읽는다. FastAPI 의 422 는 detail 에 입력값을 그대로 되돌려주기도 해서
+     * 전부 남기면 로그가 길어진다.
+     */
+    static String errorDetail(InputStream body) throws IOException {
+        byte[] head = body.readNBytes(MAX_LOGGED_ERROR_BYTES + 1);
+        if (head.length <= MAX_LOGGED_ERROR_BYTES) {
+            return new String(head, StandardCharsets.UTF_8);
+        }
+        // 바이트 단위로 자르면 한글이 깨질 수 있어 경계의 깨진 글자(U+FFFD)는 버린다
+        String text = new String(head, 0, MAX_LOGGED_ERROR_BYTES, StandardCharsets.UTF_8);
+        return text.replaceAll("�+$", "") + "…(잘림)";
+    }
+
     private JsonNode send(RestClient.ResponseSpec spec) {
         try {
             JsonNode body = spec
@@ -134,7 +151,7 @@ public class DrugProxyClient {
                         int status = response.getStatusCode().value();
                         // FastAPI 는 {"detail": "..."} 로 이유를 준다. 앱에는 감추고 로그로만 남긴다.
                         log.warn("FastAPI {} {} → {} {}", request.getMethod(), request.getURI().getPath(), status,
-                                new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8));
+                                errorDetail(response.getBody()));
                         if (status == 404) {
                             throw new DrugNotFoundException();
                         }

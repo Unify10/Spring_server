@@ -1,6 +1,6 @@
 package com.unify.onyak.domain.drugs.controller;
 
-import com.unify.onyak.domain.drugs.client.DrugProxyClient;
+import com.unify.onyak.domain.drugs.service.DrugProxyService;
 import com.unify.onyak.domain.drugs.error.exception.DrugApiUnavailableException;
 import com.unify.onyak.domain.drugs.error.exception.DrugNotFoundException;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -35,7 +35,7 @@ class DrugControllerTest {
 
     @Autowired MockMvc mockMvc;
     @MockitoBean JwtProvider jwtProvider;
-    @MockitoBean DrugProxyClient drugProxyClient;
+    @MockitoBean DrugProxyService drugProxyService;
 
     private static RequestPostProcessor ward() {
         CustomUserDetails user = new CustomUserDetails(5L, "5", null, "ROLE_WARD");
@@ -46,12 +46,12 @@ class DrugControllerTest {
     void 미인증_요청은_거부된다() throws Exception {
         int status = mockMvc.perform(get("/drugs/search").param("q", "타이레놀")).andReturn().getResponse().getStatus();
         assertEquals(401, status);
-        verifyNoInteractions(drugProxyClient);
+        verifyNoInteractions(drugProxyService);
     }
 
     @Test
     void 검색_결과를_FastAPI_응답_그대로_data에_담는다() throws Exception {
-        when(drugProxyClient.search("타이레놀", 20, false)).thenReturn(JsonMapper.builder().build().readTree("""
+        when(drugProxyService.search("타이레놀", 20, false)).thenReturn(JsonMapper.builder().build().readTree("""
                 {"query":"타이레놀","total":1,"items":[{"drug_id":"195700020","item_name":"타이레놀정500mg"}]}
                 """));
 
@@ -69,7 +69,7 @@ class DrugControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.errors[0].field").value("q"));
-        verifyNoInteractions(drugProxyClient);
+        verifyNoInteractions(drugProxyService);
     }
 
     @Test
@@ -84,12 +84,12 @@ class DrugControllerTest {
         mockMvc.perform(get("/drugs/abc").with(ward()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"));
-        verifyNoInteractions(drugProxyClient);
+        verifyNoInteractions(drugProxyService);
     }
 
     @Test
     void 없는_약은_404_DRUG_NOT_FOUND() throws Exception {
-        when(drugProxyClient.detail("000000000")).thenThrow(new DrugNotFoundException());
+        when(drugProxyService.detail("000000000")).thenThrow(new DrugNotFoundException());
 
         mockMvc.perform(get("/drugs/000000000").with(ward()))
                 .andExpect(status().isNotFound())
@@ -98,7 +98,7 @@ class DrugControllerTest {
 
     @Test
     void OCR_이미지를_넘기고_FastAPI가_죽어_있으면_502() throws Exception {
-        when(drugProxyClient.ocr(any())).thenThrow(new DrugApiUnavailableException());
+        when(drugProxyService.ocr(any())).thenThrow(new DrugApiUnavailableException());
 
         mockMvc.perform(multipart("/drugs/ocr")
                         .file(new MockMultipartFile("file", "pill.jpg", "image/jpeg", new byte[]{1, 2, 3}))
@@ -112,12 +112,12 @@ class DrugControllerTest {
         mockMvc.perform(multipart("/drugs/ocr").with(ward()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error_code").value("MISSING_PARAMETER"));
-        verifyNoInteractions(drugProxyClient);
+        verifyNoInteractions(drugProxyService);
     }
 
     @Test
     void analyze는_나이_임신_여부를_넘긴다() throws Exception {
-        when(drugProxyClient.analyze(any(), eq(78), eq(false)))
+        when(drugProxyService.analyze(any(), eq(78), eq(false)))
                 .thenReturn(JsonMapper.builder().build().readTree("{\"classification\":\"일반의약품\"}"));
 
         mockMvc.perform(multipart("/drugs/analyze")

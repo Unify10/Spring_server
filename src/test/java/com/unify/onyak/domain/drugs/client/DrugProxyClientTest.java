@@ -13,6 +13,9 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.allOf;
@@ -113,6 +116,25 @@ class DrugProxyClientTest {
 
         assertThatThrownBy(() -> client.ocr(new MockMultipartFile("file", "a.jpg", "image/jpeg", new byte[]{1})))
                 .isInstanceOf(DrugApiUnavailableException.class);
+    }
+
+    @Test
+    void 오류_본문은_짧으면_그대로_남긴다() throws Exception {
+        assertThat(DrugProxyClient.errorDetail(new ByteArrayInputStream(
+                "{\"detail\":\"빈 파일입니다.\"}".getBytes(StandardCharsets.UTF_8))))
+                .isEqualTo("{\"detail\":\"빈 파일입니다.\"}");
+    }
+
+    @Test
+    void 오류_본문이_길면_앞부분만_한글이_깨지지_않게_남긴다() throws Exception {
+        // 한글은 3바이트라 500바이트 경계가 글자 중간에 걸린다
+        String detail = "가".repeat(1000);
+
+        String logged = DrugProxyClient.errorDetail(new ByteArrayInputStream(detail.getBytes(StandardCharsets.UTF_8)));
+
+        assertThat(logged).endsWith("…(잘림)").doesNotContain("\uFFFD");
+        assertThat(logged.replace("…(잘림)", "").getBytes(StandardCharsets.UTF_8).length)
+                .isLessThanOrEqualTo(DrugProxyClient.MAX_LOGGED_ERROR_BYTES);
     }
 
     @Test

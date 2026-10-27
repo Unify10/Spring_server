@@ -1,6 +1,6 @@
 package com.unify.onyak.domain.drugs.controller;
 
-import com.unify.onyak.domain.drugs.client.DrugProxyClient;
+import com.unify.onyak.domain.drugs.service.DrugProxyService;
 import com.unify.onyak.global.response.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,7 +24,7 @@ public class DrugController {
 
     private static final String DRUG_ID = "^\\d{1,20}$";
 
-    private final DrugProxyClient drugProxyClient;
+    private final DrugProxyService drugProxyService;
 
     // 3.4 의약품 검색
     @GetMapping("/search")
@@ -33,19 +33,19 @@ public class DrugController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
             @RequestParam(name = "otc_only", defaultValue = "false") boolean otcOnly
     ) {
-        return ApiResponse.ok(drugProxyClient.search(q, limit, otcOnly));
+        return ApiResponse.ok(drugProxyService.search(q, limit, otcOnly));
     }
 
     // 3.3 바코드 조회
     @GetMapping("/barcode/{code}")
     public ApiResponse<JsonNode> barcode(@PathVariable @Pattern(regexp = "^\\d{8,14}$") String code) {
-        return ApiResponse.ok(drugProxyClient.barcode(code));
+        return ApiResponse.ok(drugProxyService.barcode(code));
     }
 
     // 3.5 약품 상세
     @GetMapping("/{drugId}")
     public ApiResponse<JsonNode> detail(@PathVariable @Pattern(regexp = DRUG_ID) String drugId) {
-        return ApiResponse.ok(drugProxyClient.detail(drugId));
+        return ApiResponse.ok(drugProxyService.detail(drugId));
     }
 
     // DUR 금기·주의 점검
@@ -55,13 +55,13 @@ public class DrugController {
             @RequestParam(required = false) @Min(0) @Max(120) Integer age,
             @RequestParam(required = false) Boolean pregnant
     ) {
-        return ApiResponse.ok(drugProxyClient.dur(drugId, age, pregnant));
+        return ApiResponse.ok(drugProxyService.dur(drugId, age, pregnant));
     }
 
     // 3.1 카메라촬영 / 3.2 갤러리업로드 — 약품명 후보까지
     @PostMapping(value = "/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<JsonNode> ocr(@RequestPart MultipartFile file) {
-        return ApiResponse.ok(drugProxyClient.ocr(file));
+        return ApiResponse.ok(drugProxyService.ocr(file));
     }
 
     // 사진 한 장 → 판정까지
@@ -71,6 +71,6 @@ public class DrugController {
             @RequestParam(required = false) @Min(0) @Max(120) Integer age,
             @RequestParam(required = false) Boolean pregnant
     ) {
-        return ApiResponse.ok(drugProxyClient.analyze(file, age, pregnant));
+        return ApiResponse.ok(drugProxyService.analyze(file, age, pregnant));
     }
 }

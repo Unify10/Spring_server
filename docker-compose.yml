@@ -25,6 +25,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?.env 에 JWT_SECRET 을 넣으세요 (openssl rand -base64 64)}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      # 비어 있으면 구글 로그인이 모두 거부된다 (google.client-ids)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
     depends_on:
       postgres:

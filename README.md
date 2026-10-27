@@ -68,6 +68,9 @@ Python_server의 같은 경로로 그대로 넘기고, `data`에는 Python_serve
 | POST | `/drugs/ocr` (multipart `file`) | 3.1/3.2 사진 → 약품명 후보 |
 | POST | `/drugs/analyze` (multipart `file`, `age`, `pregnant`) | 사진 한 장 → 판정까지 |
 
+- **응답 스키마는 Python_server가 정합니다.** Spring은 DTO로 옮기지 않고 FastAPI 응답(JSON)을 `data`에 그대로 담습니다. 의도한 방식이며, 그래서 두 가지를 감수합니다.
+  - Swagger(`/swagger-ui`)에는 이 API들의 응답 필드가 나오지 않습니다. 필드는 Python_server의 `/docs`를 보세요.
+  - Python_server가 응답 필드를 바꾸면 앱 응답도 그대로 바뀝니다. 필드를 바꾸거나 지우는 변경은 앱 담당과 먼저 맞춰야 합니다. Spring이 직접 쓰는 `/drugs/{id}`·`/drugs/cabinet-check`는 `DrugApiClient`의 DTO로 받으므로 영향 범위가 다릅니다.
 - 이미지는 10MB까지 받습니다 (넘으면 `413 FILE_TOO_LARGE`).
 - 없는 약 `404 DRUG_NOT_FOUND`, 빈 파일 등 `400 DRUG_REQUEST_INVALID`, Python_server·CLOVA·공공데이터 장애 `502 DRUG_API_UNAVAILABLE`.
 
