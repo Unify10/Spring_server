@@ -34,7 +34,8 @@ class VerifyLinkCodeServiceTest {
     void 정상적인_연동코드는_피보호자를_반환하고_USED로_변경한다() {
         Ward ward = mock(Ward.class);
         LinkCode linkCode = linkCode(ward, OffsetDateTime.now().plusMinutes(5));
-        when(linkCodeRepository.findByCodeAndStatus("123456", PENDING))
+        when(linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(
+                eq("123456"), eq(PENDING), any(OffsetDateTime.class)))
                 .thenReturn(Optional.of(linkCode));
 
         Ward result = verifyLinkCodeService.verifyLinkCode(
@@ -43,7 +44,8 @@ class VerifyLinkCodeServiceTest {
 
         assertEquals(ward, result);
         assertEquals(LinkCodeStatus.USED, linkCode.getStatus());
-        verify(linkCodeRepository).findByCodeAndStatus("123456", PENDING);
+        verify(linkCodeRepository).findByCodeAndStatusAndExpiresAtAfter(
+                eq("123456"), eq(PENDING), any(OffsetDateTime.class));
     }
 
     @Test
@@ -63,11 +65,10 @@ class VerifyLinkCodeServiceTest {
     }
 
     @Test
-    void 만료된_연동코드는_EXPIRED로_변경하고_예외를_던진다() {
-        Ward ward = mock(Ward.class);
-        LinkCode linkCode = linkCode(ward, OffsetDateTime.now().minusMinutes(1));
-        when(linkCodeRepository.findByCodeAndStatus("123456", PENDING))
-                .thenReturn(Optional.of(linkCode));
+    void 만료된_연동코드는_조회되지_않고_예외를_던진다() {
+        when(linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(
+                eq("123456"), eq(PENDING), any(OffsetDateTime.class)))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 InvalidLinkCodeException.class,
@@ -76,7 +77,8 @@ class VerifyLinkCodeServiceTest {
                 )
         );
 
-        assertEquals(LinkCodeStatus.EXPIRED, linkCode.getStatus());
+        verify(linkCodeRepository).findByCodeAndStatusAndExpiresAtAfter(
+                eq("123456"), eq(PENDING), any(OffsetDateTime.class));
     }
 
     @Test
@@ -105,7 +107,8 @@ class VerifyLinkCodeServiceTest {
 
     @Test
     void 존재하지_않는_연동코드는_예외를_던진다() {
-        when(linkCodeRepository.findByCodeAndStatus("999999", PENDING))
+        when(linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(
+                eq("999999"), eq(PENDING), any(OffsetDateTime.class)))
                 .thenReturn(Optional.empty());
 
         assertThrows(
