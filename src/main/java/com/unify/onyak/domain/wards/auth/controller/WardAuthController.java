@@ -8,6 +8,7 @@ import com.unify.onyak.domain.wards.auth.service.WardLoginService;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,8 +32,10 @@ public class WardAuthController {
 
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(
-           @RequestBody WardLoginRequest request
+           @RequestBody WardLoginRequest request,
+           HttpServletRequest httpServletRequest
     ){
-        return ApiResponse.ok(wardLoginService.login(request));
+        String clientIp = httpServletRequest.getRemoteAddr();
+        return ApiResponse.ok(wardLoginService.login(request,clientIp));
     }
 }
