@@ -1,7 +1,10 @@
 package com.unify.onyak.domain.wards.auth.controller;
 
+import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.dto.request.WardSignUpRequest;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
+import com.unify.onyak.domain.wards.auth.service.WardLoginService;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class WardAuthController {
 
     private final WardSignUpService wardSignUpService;
+    private final WardLoginService wardLoginService;
 
     @PostMapping("/signup")
     public ApiResponse<WardSignUpResponse> signup(
@@ -23,5 +27,12 @@ public class WardAuthController {
             @RequestBody @Valid WardSignUpRequest request
     ){
         return ApiResponse.created(wardSignUpService.signUp(userDetails,request));
+    }
+
+    @PostMapping("/login")
+    public ApiResponse<LoginResponse> login(
+           @RequestBody WardLoginRequest request
+    ){
+        return ApiResponse.ok(wardLoginService.login(request));
     }
 }
