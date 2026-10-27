@@ -1,0 +1,74 @@
+# 온약 전체 스택 (Spring + Python_server + PostgreSQL + Redis)
+#
+#   docker compose up -d --build
+#
+# 밖으로 여는 포트는 Spring(8080) 하나다. 앱은 Spring만 부르고, 의약품 검색·OCR도
+# Spring이 Python_server로 넘긴다. Python_server는 compose 네트워크 안에서만 보인다.
+#
+# Python_server 저장소 위치가 다르면 .env 에 PYTHON_SERVER_DIR 를 지정한다.
+# (Python_server 안의 narsha-dur 디렉터리. 기본값은 ../narsha-dur)
+
+services:
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: onyak
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FASTAPI_BASE_URL: http://drug-api:8000
+      JWT_SECRET: ${JWT_SECRET:?.env 에 JWT_SECRET 을 넣으세요 (openssl rand -base64 64)}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      drug-api:
+        condition: service_healthy
+
+  drug-api:
+    build: ${PYTHON_SERVER_DIR:-../narsha-dur}
+    env_file:
+      # CLOVA 시크릿·공공데이터 인증키. 없으면 키가 필요한 조회만 실패한다.
+      - path: ${PYTHON_SERVER_DIR:-../narsha-dur}/.env
+        required: false
+    environment:
+      DB_PATH: /data/drugs.sqlite
+    volumes:
+      # scripts/build_db.py 로 만든 통합 DB
+      - ${PYTHON_SERVER_DIR:-../narsha-dur}/data:/data:ro
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: onyak
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./onyak.sql:/schema/onyak.sql:ro
+      - ./docker/postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onyak"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
