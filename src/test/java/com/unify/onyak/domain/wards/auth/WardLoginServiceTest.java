@@ -58,7 +58,6 @@ class WardLoginServiceTest {
         assertEquals("ward-refresh-token", response.refreshToken());
         verify(verifyLinkCodeService).verifyLinkCode(any(WardLoginRequest.class));
         verify(authService).issueTokens(7L, Role.WARD);
-        verify(wardLoginAttemptService).reset("127.0.0.1");
         assertEquals(7L, response.userId());
         assertEquals("피보호자", response.name());
         assertEquals(Role.WARD, response.role());

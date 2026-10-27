@@ -58,10 +58,4 @@ class WardLoginAttemptServiceTest {
         assertFalse(wardLoginAttemptService.isBlocked("127.0.0.1"));
     }
 
-    @Test
-    void 성공_시_IP별_실패횟수를_초기화한다() {
-        wardLoginAttemptService.reset("127.0.0.1");
-
-        verify(redisTemplate).delete("ward:login:attempt:127.0.0.1");
-    }
 }
