@@ -1,7 +1,11 @@
 package com.unify.onyak.domain.wards.auth;
 
+import com.unify.onyak.domain.users.auth.dto.response.LoginResponse;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.wards.auth.controller.WardAuthController;
+import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
+import com.unify.onyak.domain.wards.auth.service.WardLoginService;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.domain.wards.link_codes.response.LinkCodeResponse;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -19,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -27,7 +33,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(WardAuthController.class)
 @Import({SecurityConfig.class, JwtAuthenticationEntryPoint.class})
@@ -38,6 +43,9 @@ class WardAuthControllerTest {
 
     @MockitoBean
     WardSignUpService wardSignUpService;
+
+    @MockitoBean
+    WardLoginService wardLoginService;
 
     @MockitoBean
     JwtProvider jwtProvider;
@@ -93,6 +101,35 @@ class WardAuthControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(wardSignUpService);
+    }
+
+    @Test
+    void 피보호자는_연동코드로_로그인할_수_있다() throws Exception {
+        when(wardLoginService.login(any(WardLoginRequest.class)))
+                .thenReturn(new LoginResponse(
+                        10L,
+                        null,
+                        "피보호자",
+                        Role.WARD,
+                        "access-token",
+                        "refresh-token"
+                ));
+
+        mockMvc.perform(post("/ward/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "code": "123456",
+                                  "qrToken": null
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.access_token").value("access-token"))
+                .andExpect(jsonPath("$.data.refresh_token").value("refresh-token"));
+
+        var captor = forClass(WardLoginRequest.class);
+        verify(wardLoginService).login(captor.capture());
+        assertEquals("123456", captor.getValue().code());
     }
 
     private String validJson() {
