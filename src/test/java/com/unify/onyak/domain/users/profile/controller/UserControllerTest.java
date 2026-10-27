@@ -6,6 +6,7 @@ import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileEditResponse;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.CurrentPasswordMismatch;
 import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
 import com.unify.onyak.domain.users.profile.service.MyProfileEditService;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
@@ -142,9 +143,9 @@ class UserControllerTest {
 
     @Test
     void 보호자의_내정보수정이_성공적으로_완료된다() throws Exception {
-        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", "qwer1234", "ROLE_GUARDIAN");
 
-        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", null);
+        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", "asdf1234", "qwer1234");
 
         when(myProfileEditService.editMyProfile(eq(3L), eq(Role.GUARDIAN), any(MyProfileEditRequest.class)))
                 .thenReturn(MyProfileEditResponse.builder()
@@ -170,7 +171,7 @@ class UserControllerTest {
     void 보호자가_아닌_사용자는_내정보수정_하면_403을_반환한다() throws Exception {
         CustomUserDetails ward = new CustomUserDetails(3L, "a@a.com", null, "ROLE_WARD");
 
-        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", null);
+        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", null, null); // Service에서 Request의 password가 null이면 현재 비밀번호 검증 자체를 안 한다.
 
         when(myProfileEditService.editMyProfile(eq(3L), eq(Role.WARD), any(MyProfileEditRequest.class)))
                 .thenThrow(new UserForbidden());
@@ -181,5 +182,23 @@ class UserControllerTest {
                         .with(authentication(new UsernamePasswordAuthenticationToken(
                                 ward, null, ward.getAuthorities()))))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 입력한_현재비밀번호가_기존과_다를시_400을_반환한다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", "qwer1234", "ROLE_GUARDIAN");
+
+        MyProfileEditRequest request = new MyProfileEditRequest("010-1111-1111", "asdf1234", "asdf1234");
+
+        when(myProfileEditService.editMyProfile(eq(3L), eq(Role.GUARDIAN), any(MyProfileEditRequest.class)))
+                .thenThrow(new CurrentPasswordMismatch());
+
+        mockMvc.perform(patch("/users/me")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content((objectMapper.writeValueAsString(request)))
+                    .with(authentication(new UsernamePasswordAuthenticationToken(
+                            guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isBadRequest());
+
     }
 }

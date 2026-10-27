@@ -91,9 +91,9 @@ public class User extends BaseTimeEntity {
 
     public void updateInformation(
             String phone,
-            String password
+            String passwordHash
     ){
         if(phone != null) this.phone = phone;
-        if(password != null) this.passwordHash = password;
+        if(passwordHash != null) this.passwordHash = passwordHash;
     }
 }
