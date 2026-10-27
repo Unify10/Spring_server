@@ -6,11 +6,12 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 public interface LinkCodeRepository extends JpaRepository<LinkCode,Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<LinkCode> findByCodeAndStatus(String code, LinkCodeStatus status);
+    Optional<LinkCode> findByCodeAndStatusAndExpiresAtAfter(String code, LinkCodeStatus status, OffsetDateTime now);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<LinkCode> findByQrTokenAndStatus(String qrToken, LinkCodeStatus status);
 }

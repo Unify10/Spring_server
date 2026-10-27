@@ -35,7 +35,7 @@ public class VerifyLinkCodeServiceImpl implements VerifyLinkCodeService {
         LinkCode linkCode;
 
         if(hasCode){
-            linkCode = linkCodeRepository.findByCodeAndStatus(request.code(),PENDING)
+            linkCode = linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(request.code(),PENDING,OffsetDateTime.now())
                     .orElseThrow(InvalidLinkCodeException::new);
         } else{
             linkCode = linkCodeRepository.findByQrTokenAndStatus(request.qrToken(), PENDING)
