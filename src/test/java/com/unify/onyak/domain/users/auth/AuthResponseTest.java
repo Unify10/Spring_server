@@ -15,6 +15,7 @@ import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
+import com.unify.onyak.domain.users.auth.service.GoogleLoginService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
 import com.unify.onyak.domain.users.auth.service.impl.AuthServiceImpl;
 import com.unify.onyak.domain.users.auth.service.impl.UserSignUpServiceImpl;
@@ -55,6 +56,7 @@ class AuthResponseTest {
     @MockitoBean AuthService authService;
     @MockitoBean UserSignUpService userSignUpService;
     @MockitoBean EmailVerificationService emailVerificationService;
+    @MockitoBean GoogleLoginService googleLoginService;
 
     @Test
     void 로그인_응답은_사용자_정보_role_토큰을_snake_case로_내려준다() throws Exception {

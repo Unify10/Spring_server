@@ -12,6 +12,9 @@ import com.unify.onyak.domain.users.auth.dto.request.EmailVerifyRequest;
 import com.unify.onyak.domain.users.auth.dto.request.SignUpRequest;
 import com.unify.onyak.domain.users.auth.dto.response.SignUpResponse;
 import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
+import com.unify.onyak.domain.users.auth.dto.request.GoogleLoginRequest;
+import com.unify.onyak.domain.users.auth.dto.response.GoogleLoginResponse;
+import com.unify.onyak.domain.users.auth.service.GoogleLoginService;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -31,6 +34,8 @@ public class AuthController {
     private final AuthService authService;
 
     private final EmailVerificationService emailVerificationService;
+
+    private final GoogleLoginService googleLoginService;
 
     // 회원가입
     @PostMapping("/signup")
@@ -61,6 +66,16 @@ public class AuthController {
     @PostMapping("/refresh")
     public ApiResponse<TokenResponse> refresh(@RequestBody @Valid RefreshRequest request) {
         return ApiResponse.ok(authService.refresh(request));
+    }
+
+    // 구글 소셜로그인
+    @PostMapping("/google")
+    public ApiResponse<GoogleLoginResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
+        GoogleLoginResponse response = googleLoginService.login(request);
+        if (Boolean.TRUE.equals(response.isNewUser())) {
+            return ApiResponse.created(response);
+        }
+        return ApiResponse.ok(response);
     }
 
     //로그아웃 기능
