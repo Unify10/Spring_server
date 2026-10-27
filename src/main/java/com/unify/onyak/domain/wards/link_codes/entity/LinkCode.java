@@ -44,9 +44,6 @@ public class LinkCode {
     @Column(name = "qr_token", nullable = false)
     private String qrToken;
 
-    @Column(name = "attempt_count",nullable = false)
-    private int attemptCount = 0;
-
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     private LinkCodeStatus status = PENDING;
@@ -68,7 +65,6 @@ public class LinkCode {
                 wardId,
                 code,
                 qrToken,
-                0,
                 PENDING,
                 expiresAt,
                 null,
@@ -79,14 +75,6 @@ public class LinkCode {
     public boolean isExpired(OffsetDateTime now){
         return !expiresAt.isAfter(now);
         // 만료되면 true를 반환
-    }
-
-    public void increaseAttemptCount(){
-        attemptCount++;
-
-        if(attemptCount>=5){
-            status = EXPIRED;
-        }
     }
 
     public void expire(){
