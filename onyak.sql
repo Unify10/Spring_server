@@ -70,7 +70,6 @@ CREATE TABLE link_codes (
                             ward_id BIGINT NOT NULL REFERENCES wards(id) ON DELETE CASCADE,
                             code VARCHAR(6) NOT NULL,
                             qr_token VARCHAR(255) NOT NULL,
-                            attempt_count INT NOT NULL DEFAULT 0,
                             status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','USED','EXPIRED')),
                             expires_at TIMESTAMPTZ NOT NULL,
                             used_at TIMESTAMPTZ,
