@@ -4,10 +4,12 @@ import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 import com.unify.onyak.domain.notifications.entity.Notification;
 import com.unify.onyak.domain.notifications.entity.NotificationType;
 import com.unify.onyak.domain.notifications.entity.RecipientType;
+import com.unify.onyak.domain.notifications.error.exception.SosForbiddenException;
 import com.unify.onyak.domain.notifications.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.notifications.repository.NotificationRepository;
 import com.unify.onyak.domain.notifications.service.SosService;
 import com.unify.onyak.domain.notifications.service.impl.SosServiceImpl;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
@@ -39,8 +41,7 @@ class SosServiceTest {
         when(wardRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(WardNotFoundException.class,
-                () -> sosService.sendSos(999L, new SosRequest(null , null)));
-
+                () -> sosService.sendSos(999L, Role.WARD, new SosRequest(null, null)));
         verifyNoInteractions(notificationRepository);
     }
 
@@ -56,7 +57,7 @@ class SosServiceTest {
         when(wardRepository.findById(7L)).thenReturn(Optional.of(ward));
 
         SosRequest request = new SosRequest(null, null);
-        sosService.sendSos(7L, request);
+        sosService.sendSos(7L, Role.WARD, request);
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
@@ -66,5 +67,13 @@ class SosServiceTest {
         assertEquals(3L, saved.getRecipientId());
         assertEquals(NotificationType.SOS, saved.getType());
         assertTrue(saved.getMessage().contains("철수"));
+    }
+
+    @Test
+    void 보호자_role이면_아무것도_조회하지_않고_예외를_던진다() {
+        assertThrows(SosForbiddenException.class,
+                () -> sosService.sendSos(7L, Role.GUARDIAN, new SosRequest(null, null)));
+
+        verifyNoInteractions(wardRepository, notificationRepository);
     }
 }

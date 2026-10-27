@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.unify.onyak.domain.notifications.dto.request.SosRequest;
 
+import com.unify.onyak.domain.notifications.error.exception.SosForbiddenException;
+import com.unify.onyak.domain.users.auth.entity.Role;
+
 @Service
 @RequiredArgsConstructor
 public class SosServiceImpl implements SosService {
@@ -22,7 +25,11 @@ public class SosServiceImpl implements SosService {
 
     @Override
     @Transactional
-    public void sendSos(Long wardId, SosRequest request) {
+    public void sendSos(Long wardId, Role role, SosRequest request) {
+        if (role != Role.WARD) {
+            throw new SosForbiddenException();
+        }
+
         Ward ward = wardRepository.findById(wardId)
                 .orElseThrow(WardNotFoundException::new);
 

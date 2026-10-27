@@ -1,7 +1,9 @@
 package com.unify.onyak.domain.notifications;
 
 import com.unify.onyak.domain.notifications.controller.SosController;
+import com.unify.onyak.domain.notifications.error.exception.SosForbiddenException;
 import com.unify.onyak.domain.notifications.service.SosService;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.global.config.SecurityConfig;
 import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
 import com.unify.onyak.global.jwt.JwtProvider;
@@ -50,7 +52,7 @@ class SosTest {
                         .content("{\"locationLat\":37.5,\"locationLng\":127.0}"))
                 .andExpect(status().isOk());
 
-        verify(sosService).sendSos(eq(7L), any(SosRequest.class));
+        verify(sosService).sendSos(eq(7L), eq(Role.WARD), any(SosRequest.class));
     }
 
     @Test
@@ -63,6 +65,20 @@ class SosTest {
                         .content("{}"))
                 .andExpect(status().isOk());
 
-        verify(sosService).sendSos(eq(9L), any(SosRequest.class));
+        verify(sosService).sendSos(eq(9L), eq(Role.WARD), any(SosRequest.class));
+    }
+
+    @Test
+    void 보호자는_SOS를_보낼_수_없어_403을_반환한다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        doThrow(new SosForbiddenException()).when(sosService)
+                .sendSos(eq(3L), eq(Role.GUARDIAN), any(SosRequest.class));
+
+        mockMvc.perform(post("/sos")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities())))
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isForbidden());
     }
 }
