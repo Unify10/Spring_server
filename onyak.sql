@@ -75,6 +75,9 @@ CREATE TABLE link_codes (
                             used_at TIMESTAMPTZ,
                             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX uq_link_codes_pending_code
+    ON link_codes(code)
+    WHERE status = 'PENDING';
 CREATE INDEX idx_link_codes_ward_id ON link_codes(ward_id);
 
 -- ============================================================
