@@ -33,7 +33,11 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid SettingEditRequest request
     ) {
-        return ApiResponse.ok(settingEditService.editSetting(userDetails.getUserId(), request));
+        return ApiResponse.ok(settingEditService.editSetting(
+                userDetails.getUserId(),
+                Role.valueOf(userDetails.getRoleName()),
+                request
+        ));
     }
 
 }

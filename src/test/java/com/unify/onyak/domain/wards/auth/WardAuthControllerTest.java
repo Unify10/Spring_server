@@ -125,6 +125,7 @@ class WardAuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.role").value("WARD"))
                 .andExpect(jsonPath("$.data.access_token").value("access-token"))
                 .andExpect(jsonPath("$.data.refresh_token").value("refresh-token"));
 
