@@ -1,7 +1,8 @@
 package com.unify.onyak.domain.wards.link_codes.service.impl;
 
 import com.unify.onyak.domain.wards.auth.entity.Ward;
-import com.unify.onyak.domain.wards.link_codes.entity.LinkCode;
+import com.unify.onyak.domain.wards.link_codes.entity.LinkCodeStatus;
+import com.unify.onyak.domain.wards.link_codes.error.exception.LinkCodeGenerationFailedException;
 import com.unify.onyak.domain.wards.link_codes.repository.LinkCodeRepository;
 import com.unify.onyak.domain.wards.link_codes.response.LinkCodeResponse;
 import com.unify.onyak.domain.wards.link_codes.service.LinkCodeService;
@@ -24,26 +25,29 @@ public class LinkCodeServiceImpl implements LinkCodeService {
     @Transactional
     public LinkCodeResponse createLinkCode(Ward ward){
 
-        int randomNum = secureRandom.nextInt(1_000_000);
-        // 랜덤 숫자(0~100만)를 code로
-        String code = String.format("%06d",randomNum);
+        linkCodeRepository.expirePendingCodes(OffsetDateTime.now(), LinkCodeStatus.PENDING,LinkCodeStatus.EXPIRED);
 
-        // 랜덤 UUID 생성
-        String qrToken = UUID.randomUUID().toString();
+        for(int i = 0; i<10; i++){
 
-        // 현재로 부터 5분 뒤의 시간을 만료 시간으로 설정
-        OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(5);
+            int randomNum = secureRandom.nextInt(1_000_000);
+            // 랜덤 숫자(0~100만)를 code로
+            String code = String.format("%06d",randomNum);
 
-        // 연동 코드 생성
-        LinkCode linkCode = LinkCode.createLocal(
-                ward,
-                code,
-                qrToken,
-                expiresAt
-        );
+            OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(5);
+            String qrToken = UUID.randomUUID().toString();
 
-        linkCodeRepository.save(linkCode);
+            int inserted = linkCodeRepository.insertIfCodeAvailable(
+                    ward.getId(),
+                    code,
+                    qrToken,
+                    expiresAt
+            );
 
-        return new LinkCodeResponse(linkCode.getCode(),linkCode.getQrToken(),linkCode.getExpiresAt());
+            if(inserted == 1){
+                return new LinkCodeResponse(code, qrToken, expiresAt);
+            }
+        }
+
+        throw new LinkCodeGenerationFailedException();
     }
 }
