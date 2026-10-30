@@ -29,7 +29,7 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String phone;
 
     @Column(name = "email_verified", nullable = false)
@@ -60,6 +60,7 @@ public class User extends BaseTimeEntity {
 
     public static User createLocal(String email, String passwordHash, String name, String phone,
                                     LocalDate birthDate, Float weight, Float height, Gender gender,
+                                    Boolean isPregnant,
                                     Boolean medicationPushEnabled, Boolean sosPushEnabled, Boolean marketingPushEnabled) {
         return new User(
                 null,
@@ -73,7 +74,7 @@ public class User extends BaseTimeEntity {
                 weight,
                 height,
                 gender,
-                null,
+                isPregnant,
                 medicationPushEnabled,
                 sosPushEnabled,
                 marketingPushEnabled
@@ -87,5 +88,29 @@ public class User extends BaseTimeEntity {
         if(medicationPushEnabled != null) this.medicationPushEnabled = medicationPushEnabled;
         if(sosPushEnabled != null) this.sosPushEnabled = sosPushEnabled;
         if(marketingPushEnabled != null) this.marketingPushEnabled = marketingPushEnabled;
+    }
+
+    public static User createGoogle(String email, String name, String googleId) {
+        return new User(
+                null,
+                email,
+                null,
+                googleId,
+                name,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                true,
+                true
+        );
+    }
+
+    public void linkGoogleId(String googleId) {
+        this.googleId = googleId;
     }
 }

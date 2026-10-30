@@ -4,6 +4,7 @@ import com.unify.onyak.domain.users.auth.controller.AuthController;
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
+import com.unify.onyak.domain.users.auth.service.GoogleLoginService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
 import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
@@ -35,6 +36,7 @@ class LogoutTest {
     @MockitoBean AuthService authService;
     @MockitoBean UserSignUpService userSignUpService;
     @MockitoBean EmailVerificationService emailVerificationService;
+    @MockitoBean GoogleLoginService googleLoginService;
 
     @Test
     void 미인증_요청은_거부된다() throws Exception {

@@ -47,6 +47,7 @@ public class UserSignUpServiceImpl implements UserSignUpService {
                 request.weight(),
                 request.height(),
                 request.gender(),
+                request.isPregnant(),
                 request.medicationPushEnabled() == null ||  request.medicationPushEnabled(),
                 request.sosPushEnabled() == null ||  request.sosPushEnabled(),
                 request.marketingPushEnabled() == null || request.marketingPushEnabled()

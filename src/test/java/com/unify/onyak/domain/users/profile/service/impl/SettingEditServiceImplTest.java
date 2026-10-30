@@ -48,6 +48,7 @@ class SettingEditServiceImplTest {
                 60.5f,
                 170.0f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
