@@ -55,7 +55,7 @@ class UserControllerTest {
     @Test
     void 인증된_사용자는_snake_case_본문으로_환경설정을_변경한다() throws Exception {
         CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
-        when(settingEditService.editSetting(eq(3L), any(SettingEditRequest.class)))
+        when(settingEditService.editSetting(eq(3L), eq(Role.GUARDIAN), any(SettingEditRequest.class)))
                 .thenReturn(SettingEditResponse.builder()
                         .medicationPushEnabled(true)
                         .sosPushEnabled(false)
@@ -74,7 +74,7 @@ class UserControllerTest {
 
         // 전역 SNAKE_CASE 가 본문 키를 camelCase 필드로 매핑했는지
         ArgumentCaptor<SettingEditRequest> captor = ArgumentCaptor.forClass(SettingEditRequest.class);
-        verify(settingEditService).editSetting(eq(3L), captor.capture());
+        verify(settingEditService).editSetting(eq(3L), eq(Role.GUARDIAN), captor.capture());
         assertThat(captor.getValue().medicationPushEnabled()).isTrue();
         assertThat(captor.getValue().sosPushEnabled()).isFalse();
         assertThat(captor.getValue().marketingPushEnabled()).isFalse();
@@ -112,6 +112,21 @@ class UserControllerTest {
 
         // 서비스에 넘기는 userId가 요청이 아니라 인증 principal에서 온 값인지
         verify(myProfileService).getMyProfile(3L,  Role.GUARDIAN);
+    }
+
+    @Test
+    void 피보호자는_환경설정을_변경할_수_없다() throws Exception {
+        CustomUserDetails ward = new CustomUserDetails(3L, "3", null, "ROLE_WARD");
+        when(settingEditService.editSetting(
+                eq(3L), eq(Role.WARD), any(SettingEditRequest.class)))
+                .thenThrow(new UserForbidden());
+
+        mockMvc.perform(patch("/users/me/settings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"medication_push_enabled\":true}")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                ward, null, ward.getAuthorities()))))
+                .andExpect(status().isForbidden());
     }
 
     @Test

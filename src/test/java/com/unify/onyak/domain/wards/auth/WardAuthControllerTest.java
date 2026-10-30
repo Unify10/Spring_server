@@ -26,6 +26,7 @@ import java.time.OffsetDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -105,7 +106,7 @@ class WardAuthControllerTest {
 
     @Test
     void 피보호자는_연동코드로_로그인할_수_있다() throws Exception {
-        when(wardLoginService.login(any(WardLoginRequest.class)))
+        when(wardLoginService.login(any(WardLoginRequest.class), anyString()))
                 .thenReturn(new LoginResponse(
                         10L,
                         null,
@@ -124,11 +125,12 @@ class WardAuthControllerTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.role").value("WARD"))
                 .andExpect(jsonPath("$.data.access_token").value("access-token"))
                 .andExpect(jsonPath("$.data.refresh_token").value("refresh-token"));
 
         var captor = forClass(WardLoginRequest.class);
-        verify(wardLoginService).login(captor.capture());
+        verify(wardLoginService).login(captor.capture(), anyString());
         assertEquals("123456", captor.getValue().code());
     }
 

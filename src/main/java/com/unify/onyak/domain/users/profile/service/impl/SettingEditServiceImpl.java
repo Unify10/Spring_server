@@ -1,9 +1,11 @@
 package com.unify.onyak.domain.users.profile.service.impl;
 
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
 import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
 import com.unify.onyak.domain.users.profile.service.SettingEditService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,12 @@ public class SettingEditServiceImpl implements SettingEditService {
 
     @Transactional
     @Override
-    public SettingEditResponse editSetting(Long userId, SettingEditRequest request) {
+    public SettingEditResponse editSetting(Long userId, Role role, SettingEditRequest request) {
+
+        if(role != Role.GUARDIAN){
+            throw new UserForbidden();
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFound::new);
 

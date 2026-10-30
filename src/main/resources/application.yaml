@@ -54,3 +54,5 @@ app:
     privacy-url: "https://onyak.app/privacy"
 google:
   client-ids: ${GOOGLE_CLIENT_ID:}
+server:
+  forward-headers-strategy: framework

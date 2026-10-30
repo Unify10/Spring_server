@@ -59,7 +59,7 @@ class SettingEditServiceImplTest {
                 testUser.getId(),
                 testUser.getName(),
                 testUser.getPasswordHash(),
-                "ROLE_USER"
+                "ROLE_GUARDIAN"
         );
     }
 
