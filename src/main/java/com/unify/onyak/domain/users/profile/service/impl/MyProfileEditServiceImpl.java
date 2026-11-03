@@ -2,6 +2,7 @@ package com.unify.onyak.domain.users.profile.service.impl;
 
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.request.MyProfileEditRequest;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileEditResponse;
@@ -14,15 +15,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.Period;
-
 @Service
 @RequiredArgsConstructor
 public class MyProfileEditServiceImpl implements MyProfileEditService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
     @Override
@@ -43,6 +42,10 @@ public class MyProfileEditServiceImpl implements MyProfileEditService {
         String passwordHash = request.password() == null
                 ? null
                 : passwordEncoder.encode(request.password());
+
+        if(passwordHash != null) {
+            refreshTokenRepository.deleteById(String.valueOf(userId));
+        }
 
         user.updateInformation(
                 request.phone(),

@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-
 @Builder
 public record MyProfileEditResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
