@@ -90,6 +90,15 @@ public class User extends BaseTimeEntity {
         if(marketingPushEnabled != null) this.marketingPushEnabled = marketingPushEnabled;
     }
 
+    public void updateBody(LocalDate birthDate, Float weight, Float height,
+                           Gender gender, Boolean isPregnant) {
+        if (birthDate != null) this.birthDate = birthDate;
+        if (weight != null) this.weight = weight;
+        if (height != null) this.height = height;
+        if (gender != null) this.gender = gender;
+        if (isPregnant != null) this.isPregnant = isPregnant;
+    }
+
     public static User createGoogle(String email, String name, String googleId) {
         return new User(
                 null,
