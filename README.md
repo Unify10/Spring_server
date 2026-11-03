@@ -41,6 +41,14 @@ DB/Redis 접속 정보, 메일 계정, JWT 서명 키는 `.env` 파일로 관리
 
 `.env`는 `.gitignore`에 등록되어 커밋되지 않으며, 값은 `application.yaml`에서 `${DB_HOST:localhost}` 형태로 참조합니다. 기본값이 없는 변수(`MAIL_*`, `JWT_SECRET`)는 반드시 채워야 앱이 정상적으로 시작됩니다.
 
+## 기존 DB 스키마 변경 안내
+
+`ddl-auto: update`는 기존 컬럼의 제약을 풀어주지 않습니다. 구글 신규 가입(`phone` 없이 가입)을 위해 `users.phone`의 NOT NULL을 해제했으므로, `onyak.sql`이 아니라 `ddl-auto: update`로 이미 만든 DB에는 아래를 한 번 실행해야 합니다.
+
+```sql
+ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;
+```
+
 ## Docker로 전체 스택 띄우기
 
 Spring·Python_server·PostgreSQL·Redis를 한 번에 띄웁니다. Python_server 저장소를 이 저장소 옆(`../narsha-dur`)에 두거나 `.env`에 `PYTHON_SERVER_DIR`로 경로를 지정하세요. `.env`에는 `JWT_SECRET`이 있어야 합니다.
