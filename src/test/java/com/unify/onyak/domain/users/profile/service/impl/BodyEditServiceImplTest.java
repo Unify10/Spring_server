@@ -37,6 +37,7 @@ class BodyEditServiceImplTest {
         return User.createLocal(
                 "a@a.com", "hash", "테스트", "010-0000-0000",
                 LocalDate.of(1990, 1, 1), 60.0f, 170.0f, gender,
+                null,
                 true, true, true
         );
     }

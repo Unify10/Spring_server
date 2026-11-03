@@ -20,7 +20,7 @@ CREATE TABLE users (
                        password_hash VARCHAR(255),
                        google_id VARCHAR(255) UNIQUE,
                        name VARCHAR(100) NOT NULL,
-                       phone VARCHAR(20) NOT NULL,
+                       phone VARCHAR(20),
                        email_verified BOOLEAN NOT NULL DEFAULT false,
                        birth_date DATE,
                        weight REAL,

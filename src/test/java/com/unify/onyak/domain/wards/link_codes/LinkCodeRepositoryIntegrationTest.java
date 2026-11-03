@@ -47,6 +47,7 @@ class LinkCodeRepositoryIntegrationTest {
                 70.0f,
                 175.0f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
