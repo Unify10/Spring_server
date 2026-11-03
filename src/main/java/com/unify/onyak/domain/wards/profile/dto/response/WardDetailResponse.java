@@ -6,7 +6,6 @@ import com.unify.onyak.domain.wards.auth.entity.Ward;
 import java.time.LocalDate;
 
 public record WardDetailResponse(
-
         Long wardId,
 
         String name,
@@ -24,7 +23,6 @@ public record WardDetailResponse(
         Boolean medicationPushEnabled,
 
         Boolean sosPushEnabled
-
 ) {
     public static WardDetailResponse from(Ward ward) {
         return new WardDetailResponse(
