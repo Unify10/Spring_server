@@ -32,6 +32,8 @@ public record SignUpRequest(
 
         Gender gender,
 
+        Boolean isPregnant,
+
         Boolean medicationPushEnabled,
 
         Boolean sosPushEnabled,

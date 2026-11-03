@@ -53,7 +53,7 @@ public class UserValidationPolicy {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(LoginFailedException::new);
 
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new LoginFailedException();
         }
 
