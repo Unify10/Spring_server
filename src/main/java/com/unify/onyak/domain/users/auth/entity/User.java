@@ -97,4 +97,12 @@ public class User extends BaseTimeEntity {
         if (gender != null) this.gender = gender;
         if (isPregnant != null) this.isPregnant = isPregnant;
     }
+
+    public void updateInformation(
+            String phone,
+            String passwordHash
+    ){
+        if(phone != null) this.phone = phone;
+        if(passwordHash != null) this.passwordHash = passwordHash;
+    }
 }
