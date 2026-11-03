@@ -1,10 +1,15 @@
 package com.unify.onyak.domain.users.profile.controller;
 
+import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.Role;
+import com.unify.onyak.domain.users.profile.dto.request.BodyEditRequest;
 import com.unify.onyak.domain.users.profile.dto.request.SettingEditRequest;
+import com.unify.onyak.domain.users.profile.dto.response.BodyEditResponse;
 import com.unify.onyak.domain.users.profile.dto.response.MyProfileResponse;
 import com.unify.onyak.domain.users.profile.dto.response.SettingEditResponse;
+import com.unify.onyak.domain.users.profile.error.exception.InvalidPregnancy;
 import com.unify.onyak.domain.users.profile.error.exception.UserForbidden;
+import com.unify.onyak.domain.users.profile.service.BodyEditService;
 import com.unify.onyak.domain.users.profile.service.MyProfileService;
 import com.unify.onyak.domain.users.profile.service.SettingEditService;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -20,6 +25,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +48,7 @@ class UserControllerTest {
     @MockitoBean JwtProvider jwtProvider;
     @MockitoBean SettingEditService settingEditService;
     @MockitoBean private MyProfileService myProfileService;
+    @MockitoBean BodyEditService bodyEditService;
 
     @Test
     void 인증_없이_환경설정을_변경하면_401이다() throws Exception {
@@ -147,5 +155,108 @@ class UserControllerTest {
                 .with(authentication(new UsernamePasswordAuthenticationToken(
                         ward, null, ward.getAuthorities()))))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 인증_없이_신체정보를_수정하면_401이다() throws Exception {
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"weight\":60.5}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(bodyEditService);
+    }
+
+    @Test
+    void 보호자는_snake_case_본문으로_신체정보를_수정한다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        when(bodyEditService.editBody(eq(3L), eq(Role.GUARDIAN), any(BodyEditRequest.class)))
+                .thenReturn(new BodyEditResponse(
+                        LocalDate.of(1990, 5, 1), 55.5f, 162.0f, Gender.F, true));
+
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "birth_date": "1990-05-01",
+                                  "weight": 55.5,
+                                  "height": 162.0,
+                                  "gender": "F",
+                                  "is_pregnant": true
+                                }
+                                """)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.birth_date").value("1990-05-01"))
+                .andExpect(jsonPath("$.data.weight").value(55.5))
+                .andExpect(jsonPath("$.data.height").value(162.0))
+                .andExpect(jsonPath("$.data.gender").value("F"))
+                .andExpect(jsonPath("$.data.is_pregnant").value(true));
+
+        // 전역 SNAKE_CASE 가 본문 키를 camelCase 필드로 매핑했는지
+        ArgumentCaptor<BodyEditRequest> captor = ArgumentCaptor.forClass(BodyEditRequest.class);
+        verify(bodyEditService).editBody(eq(3L), eq(Role.GUARDIAN), captor.capture());
+        assertThat(captor.getValue().birthDate()).isEqualTo(LocalDate.of(1990, 5, 1));
+        assertThat(captor.getValue().weight()).isEqualTo(55.5f);
+        assertThat(captor.getValue().height()).isEqualTo(162.0f);
+        assertThat(captor.getValue().gender()).isEqualTo(Gender.F);
+        assertThat(captor.getValue().isPregnant()).isTrue();
+    }
+
+    @Test
+    void 피보호자는_신체정보를_수정할_수_없다() throws Exception {
+        CustomUserDetails ward = new CustomUserDetails(3L, "3", null, "ROLE_WARD");
+        when(bodyEditService.editBody(eq(3L), eq(Role.WARD), any(BodyEditRequest.class)))
+                .thenThrow(new UserForbidden());
+
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"weight\":60.5}")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                ward, null, ward.getAuthorities()))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 남성이_임신으로_수정하면_400이다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+        when(bodyEditService.editBody(eq(3L), eq(Role.GUARDIAN), any(BodyEditRequest.class)))
+                .thenThrow(new InvalidPregnancy());
+
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"gender\":\"M\",\"is_pregnant\":true}")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 몸무게가_음수면_400이고_서비스를_호출하지_않는다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"weight\":-1}")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bodyEditService);
+    }
+
+    @Test
+    void 생년월일이_미래면_400이고_서비스를_호출하지_않는다() throws Exception {
+        CustomUserDetails guardian = new CustomUserDetails(3L, "a@a.com", null, "ROLE_GUARDIAN");
+
+        mockMvc.perform(patch("/users/me/body")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"birth_date\":\"" + LocalDate.now().plusDays(1) + "\"}")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                guardian, null, guardian.getAuthorities()))))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(bodyEditService);
     }
 }
