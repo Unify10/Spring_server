@@ -12,6 +12,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.unify.onyak.domain.users.profile.dto.request.BodyEditRequest;
+import com.unify.onyak.domain.users.profile.dto.response.BodyEditResponse;
+import com.unify.onyak.domain.users.profile.service.BodyEditService;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final SettingEditService settingEditService;
     private final MyProfileService myProfileService;
+    private final BodyEditService bodyEditService;
 
     // 내 정보 조회
     @GetMapping("/me")
@@ -40,4 +44,16 @@ public class UserController {
         ));
     }
 
+    // 보호자 신체정보 수정
+    @PatchMapping("/me/body")
+    public ApiResponse<BodyEditResponse> editBody(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid BodyEditRequest request
+    ) {
+        return ApiResponse.ok(bodyEditService.editBody(
+                userDetails.getUserId(),
+                Role.valueOf(userDetails.getRoleName()),
+                request
+        ));
+    }
 }
