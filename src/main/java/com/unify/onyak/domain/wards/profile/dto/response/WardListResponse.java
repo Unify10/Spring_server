@@ -1,9 +1,9 @@
-package com.unify.onyak.domain.wards.profile.dto.reseponse;
+package com.unify.onyak.domain.wards.profile.dto.response;
 
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 
 public record WardListResponse(
-        Long id,
+        Long wardId,
         String name
 ) {
     public static WardListResponse from(Ward ward){

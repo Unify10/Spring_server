@@ -1,4 +1,4 @@
-package com.unify.onyak.domain.wards.profile.dto.reseponse;
+package com.unify.onyak.domain.wards.profile.dto.response;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
