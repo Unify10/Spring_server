@@ -63,6 +63,7 @@ class MyProfileEditServiceImplTest {
                 60.5f,
                 170.0f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
@@ -77,6 +78,7 @@ class MyProfileEditServiceImplTest {
                 60.5f,
                 170.0f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
@@ -91,6 +93,7 @@ class MyProfileEditServiceImplTest {
                 60.5f,
                 170.5f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
