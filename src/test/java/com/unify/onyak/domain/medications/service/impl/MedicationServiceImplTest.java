@@ -183,6 +183,19 @@ class MedicationServiceImplTest {
     }
 
     @Test
+    void 아직_시작_안_한_약을_종료일_없이_중단하면_시작일로_중단된다() {
+        LocalDate tomorrow = KoreanDate.today().plusDays(1);
+        Medication future = Medication.create(ward, tylenol, "1정", tomorrow, List.of(), true);
+        org.springframework.test.util.ReflectionTestUtils.setField(future, "id", 30L);
+        when(medicationRepository.findWithDrugAndWardById(30L)).thenReturn(Optional.of(future));
+
+        MedicationResponse res = service.updateMedication(me, 30L, new MedicationUpdateRequest(null, false, null));
+
+        assertThat(res.active()).isFalse();
+        assertThat(res.endDate()).isEqualTo(tomorrow);
+    }
+
+    @Test
     void 중단일이_시작일보다_빠르면_400() {
         stored(10L, List.of());   // 시작일 2026-10-01
 
