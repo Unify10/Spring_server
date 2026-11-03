@@ -4,9 +4,10 @@ import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
+import com.unify.onyak.domain.medications.error.exception.WardAccessDeniedException;
+import com.unify.onyak.domain.medications.error.exception.WardNotFoundException;
+import com.unify.onyak.domain.medications.policy.WardAccessValidator;
 import com.unify.onyak.domain.wards.error.exception.GuardianRoleRequiredException;
-import com.unify.onyak.domain.wards.error.exception.WardAccessDeniedException;
-import com.unify.onyak.domain.wards.error.exception.WardNotFoundException;
 import com.unify.onyak.domain.wards.profile.dto.response.WardDetailResponse;
 import com.unify.onyak.domain.wards.profile.dto.response.WardListResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
@@ -29,7 +30,10 @@ class WardProfileServiceImplTest {
     @BeforeEach
     void setUp() {
         wardRepository = mock(WardRepository.class);
-        wardProfileService = new WardProfileServiceImpl(wardRepository);
+        wardProfileService = new WardProfileServiceImpl(
+                wardRepository,
+                new WardAccessValidator(wardRepository)
+        );
     }
 
     @Test
