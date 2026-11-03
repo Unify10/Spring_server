@@ -4,9 +4,10 @@ import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
 import com.unify.onyak.domain.wards.error.exception.GuardianRoleRequiredException;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
+import com.unify.onyak.domain.wards.error.exception.WardAccessDeniedException;
 import com.unify.onyak.domain.wards.error.exception.WardNotFoundException;
-import com.unify.onyak.domain.wards.profile.dto.reseponse.WardDetailResponse;
-import com.unify.onyak.domain.wards.profile.dto.reseponse.WardListResponse;
+import com.unify.onyak.domain.wards.profile.dto.response.WardDetailResponse;
+import com.unify.onyak.domain.wards.profile.dto.response.WardListResponse;
 import com.unify.onyak.domain.wards.profile.service.WardProfileService;
 import com.unify.onyak.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class WardProfileServiceImpl implements WardProfileService {
         Ward ward = wardRepository.findById(wardId).orElseThrow(WardNotFoundException::new);
 
         if(!ward.getGuardianId().getId().equals(userDetails.getUserId())){
-            throw new GuardianRoleRequiredException();
+            throw new WardAccessDeniedException();
         }
 
         return WardDetailResponse.from(ward);
