@@ -31,12 +31,20 @@ public class BodyEditServiceImpl implements BodyEditService {
                 .orElseThrow(UserNotFound::new);
 
         Gender gender = request.gender() != null ? request.gender() : user.getGender();
-        if (gender == Gender.M && Boolean.TRUE.equals(request.isPregnant())) {
-            throw new InvalidPregnancy();
+        Boolean isPregnant = request.isPregnant();
+
+        if (gender == Gender.M) {
+            if (Boolean.TRUE.equals(isPregnant)) {
+                throw new InvalidPregnancy();
+            }
+            // 요청에 임신 여부가 없어도 최종 성별이 남성이면 기존 true를 정리
+            if (Boolean.TRUE.equals(user.getIsPregnant())) {
+                isPregnant = false;
+            }
         }
 
         user.updateBody(request.birthDate(), request.weight(), request.height(),
-                request.gender(), request.isPregnant());
+                request.gender(), isPregnant);
 
         return BodyEditResponse.from(user);
     }
