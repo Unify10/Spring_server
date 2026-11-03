@@ -1,5 +1,6 @@
 package com.unify.onyak.domain.users.profile.service.impl;
 
+import com.unify.onyak.domain.users.auth.entity.RefreshToken;
 import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.auth.entity.User;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
@@ -44,7 +45,7 @@ public class MyProfileEditServiceImpl implements MyProfileEditService {
                 : passwordEncoder.encode(request.password());
 
         if(passwordHash != null) {
-            refreshTokenRepository.deleteById(String.valueOf(userId));
+            refreshTokenRepository.deleteById(RefreshToken.keyOf(role, userId));
         }
 
         user.updateInformation(

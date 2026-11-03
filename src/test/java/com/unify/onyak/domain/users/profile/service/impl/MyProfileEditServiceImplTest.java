@@ -2,6 +2,7 @@ package com.unify.onyak.domain.users.profile.service.impl;
 
 import com.unify.onyak.domain.users.auth.entity.Gender;
 import com.unify.onyak.domain.users.auth.entity.User;
+import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.users.profile.dto.request.MyProfileEditRequest;
 import com.unify.onyak.domain.users.profile.error.exception.UserNotFound;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +25,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -37,6 +40,8 @@ class MyProfileEditServiceImplTest {
     @Autowired private UserRepository userRepository;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private PasswordEncoder passwordEncoder;
+
+    @MockitoBean private RefreshTokenRepository refreshTokenRepository;
 
     private User normalUser;
     private User googleUser;
@@ -136,6 +141,9 @@ class MyProfileEditServiceImplTest {
 
         assertThat(updUser.getPhone()).isEqualTo("010-1111-1111");
         assertThat(passwordEncoder.matches("qwer1234", updUser.getPasswordHash())).isTrue();
+
+        String expectToken = "GUARDIAN:" + normalUser.getId();
+        verify(refreshTokenRepository).deleteById(expectToken);
     }
 
     @Test
