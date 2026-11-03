@@ -1,4 +1,4 @@
-package com.unify.onyak.domain.wards.auth.error;
+package com.unify.onyak.domain.wards.error;
 
 import com.unify.onyak.global.error.ErrorCode;
 import lombok.Getter;

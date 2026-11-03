@@ -6,7 +6,7 @@ import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.wards.auth.dto.request.WardLoginRequest;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
-import com.unify.onyak.domain.wards.auth.error.exception.TooManyLoginRequestException;
+import com.unify.onyak.domain.wards.error.exception.TooManyLoginRequestException;
 import com.unify.onyak.domain.wards.auth.service.WardLoginAttemptService;
 import com.unify.onyak.domain.wards.auth.service.WardLoginService;
 import com.unify.onyak.domain.wards.auth.service.impl.WardLoginServiceImpl;
