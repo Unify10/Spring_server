@@ -7,7 +7,7 @@ import com.unify.onyak.domain.users.auth.repository.UserRepository;
 import com.unify.onyak.domain.wards.auth.dto.request.WardSignUpRequest;
 import com.unify.onyak.domain.wards.auth.dto.response.WardSignUpResponse;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
-import com.unify.onyak.domain.wards.auth.error.exception.GuardianRoleRequiredException;
+import com.unify.onyak.domain.wards.error.exception.GuardianRoleRequiredException;
 import com.unify.onyak.domain.wards.auth.repository.WardRepository;
 import com.unify.onyak.domain.wards.auth.service.WardSignUpService;
 import com.unify.onyak.domain.wards.auth.service.impl.WardSignUpServiceImpl;
