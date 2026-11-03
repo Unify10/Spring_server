@@ -113,4 +113,12 @@ public class User extends BaseTimeEntity {
     public void linkGoogleId(String googleId) {
         this.googleId = googleId;
     }
+
+    public void updateInformation(
+            String phone,
+            String passwordHash
+    ){
+        if(phone != null) this.phone = phone;
+        if(passwordHash != null) this.passwordHash = passwordHash;
+    }
 }
