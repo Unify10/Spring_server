@@ -11,6 +11,7 @@ import com.unify.onyak.domain.users.auth.policy.UserValidationPolicy;
 import com.unify.onyak.domain.users.auth.repository.RefreshTokenRepository;
 import com.unify.onyak.domain.users.auth.service.AuthService;
 import com.unify.onyak.domain.users.auth.service.EmailVerificationService;
+import com.unify.onyak.domain.users.auth.service.GoogleLoginService;
 import com.unify.onyak.domain.users.auth.service.UserSignUpService;
 import com.unify.onyak.domain.users.auth.service.impl.AuthServiceImpl;
 import com.unify.onyak.global.config.SecurityConfig;
@@ -55,6 +56,7 @@ class RefreshTest {
     @MockitoBean AuthService authService;
     @MockitoBean UserSignUpService userSignUpService;
     @MockitoBean EmailVerificationService emailVerificationService;
+    @MockitoBean GoogleLoginService googleLoginService;
 
     private final JwtProvider jwtProvider = new JwtProvider(SECRET, ACCESS_EXP, REFRESH_EXP);
     private final RefreshTokenRepository repository = mock(RefreshTokenRepository.class);

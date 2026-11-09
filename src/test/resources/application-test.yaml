@@ -1,2 +1,4 @@
 jwt:
   secret: dGVzdC1vbmx5LXNlY3JldC1rZXktbm90LWZvci1wcm9kdWN0aW9uLXVzZS0xMjM0NTY3OA==
+google:
+  client-ids: test-client-id

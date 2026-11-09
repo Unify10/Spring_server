@@ -116,7 +116,7 @@ public class MedicationServiceImpl implements MedicationService {
 
         if (Boolean.FALSE.equals(request.active())) {
             // 중단 (이미 중단된 약이면 종료일만 갱신)
-            medication.stop(request.endDate() != null ? request.endDate() : KoreanDate.today());
+            medication.stop(request.endDate() != null ? request.endDate() : defaultEndDate(medication));
         } else if (Boolean.TRUE.equals(request.active())) {
             if (!medication.isActive()) {
                 boolean duplicated = medicationRepository.existsByWardIdAndDrugIdAndActiveTrueAndIdNot(
@@ -199,6 +199,15 @@ public class MedicationServiceImpl implements MedicationService {
         } catch (DataIntegrityViolationException e) {
             throw toDuplicate(e);
         }
+    }
+
+    /**
+     * 종료일을 안 보냈을 때의 중단일 — 오늘(KST). 다만 시작일이 아직 안 온 약(예: 내일부터 먹기로 담은 약)을
+     * 미리 중단하면 오늘이 시작일보다 빨라 400 이 났으므로, 그때는 시작일로 맞춘다.
+     */
+    static LocalDate defaultEndDate(Medication medication) {
+        LocalDate today = KoreanDate.today();
+        return today.isBefore(medication.getStartDate()) ? medication.getStartDate() : today;
     }
 
     /** 복용 중 유니크 인덱스 위반만 409 로 바꾸고, 다른 제약 위반은 그대로 올린다. */

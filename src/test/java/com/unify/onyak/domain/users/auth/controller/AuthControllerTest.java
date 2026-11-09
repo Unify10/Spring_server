@@ -59,6 +59,7 @@ class AuthControllerTest {
                 60.5f,
                 170.0f,
                 Gender.M,
+                null, // isPregnant
                 null, // medicationPushEnabled
                 null, // sosPushEnabled
                 null  // marketingPushEnabled
