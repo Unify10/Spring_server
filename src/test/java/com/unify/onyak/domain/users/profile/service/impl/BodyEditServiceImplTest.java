@@ -127,4 +127,58 @@ class BodyEditServiceImplTest {
 
         assertThat(response.isPregnant()).isFalse();
     }
+
+    @Test
+    void 임신중인_여성이_성별만_남성으로_바꾸면_임신여부가_false가_된다() {
+        User user = user(Gender.F);
+        user.updateBody(null, null, null, null, true);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+
+        BodyEditResponse response = bodyEditService.editBody(3L, Role.GUARDIAN,
+                new BodyEditRequest(null, null, null, Gender.M, null));
+
+        assertThat(user.getGender()).isEqualTo(Gender.M);
+        assertThat(user.getIsPregnant()).isFalse();
+        assertThat(response.isPregnant()).isFalse();
+    }
+
+    @Test
+    void 이미_남성인데_임신으로_저장된_데이터는_다른_필드_수정시_정리된다() {
+        User user = user(Gender.M);
+        user.updateBody(null, null, null, null, true);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+
+        bodyEditService.editBody(3L, Role.GUARDIAN,
+                new BodyEditRequest(null, 70.0f, null, null, null));
+
+        assertThat(user.getIsPregnant()).isFalse();
+        assertThat(user.getWeight()).isEqualTo(70.0f);
+    }
+
+    @Test
+    void 여성의_임신여부는_성별을_안_바꾸면_유지된다() {
+        User user = user(Gender.F);
+        user.updateBody(null, null, null, null, true);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+
+        bodyEditService.editBody(3L, Role.GUARDIAN,
+                new BodyEditRequest(null, 55.0f, null, null, null));
+
+        assertThat(user.getIsPregnant()).isTrue();
+        assertThat(user.getWeight()).isEqualTo(55.0f);
+    }
+
+    @Test
+    void 남성으로_바꾸면서_임신을_명시하면_예외를_던지고_수정하지_않는다() {
+        User user = user(Gender.F);
+        user.updateBody(null, null, null, null, true);
+        when(userRepository.findById(3L)).thenReturn(Optional.of(user));
+
+        assertThrows(InvalidPregnancy.class,
+                () -> bodyEditService.editBody(3L, Role.GUARDIAN,
+                        new BodyEditRequest(null, null, null, Gender.M, true)));
+
+        assertThat(user.getGender()).isEqualTo(Gender.F);
+        assertThat(user.getIsPregnant()).isTrue();
+    }
 }
