@@ -184,6 +184,14 @@ class MedicationControllerTest {
     }
 
     @Test
+    void 없는_경로는_500이_아니라_404() throws Exception {
+        mockMvc.perform(patch("/medications/10/stop").with(guardian()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error_code").value("API_NOT_FOUND"));
+        verifyNoInteractions(medicationService);
+    }
+
+    @Test
     void 시각_형식이_틀리면_400() throws Exception {
         mockMvc.perform(patch("/medications/10/schedule").with(guardian())
                         .contentType("application/json")

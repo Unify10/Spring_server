@@ -95,6 +95,7 @@ Python_server의 같은 경로로 그대로 넘기고, `data`에는 Python_serve
 | DELETE | `/medications/{medId}` | 5.2 삭제 (복약 체크 기록·분석 결과도 함께 삭제됨) |
 | GET / PATCH | `/medications/{medId}/schedule` | 5.3 복용 시각(`["08:00","20:00"]`)·알림 변경 (보낸 필드만) |
 | GET | `/wards/{wardId}/evidence-card` | 6.2 복약 확인 근거 카드 (DUR 점검) |
+| POST | `/wards/{wardId}/medications/precheck` | 4.1~4.3 약장에 담기 **전** 미리 점검 — 새 약 ↔ 복용 중인 약 병용금기·성분중복 + 새 약의 연령/임부 금기 (저장 안 함) |
 
 - 약 정보와 DUR 판정은 Python_server(FastAPI)가 담당합니다. 실행 중이 아니면 약장 담기(처음 담는 약)와 근거 카드가 `502`를 반환합니다.
 - 약을 처음 담을 때 FastAPI `GET /drugs/{itemSeq}`로 받아 `drugs` 테이블에 저장하고, 이후에는 DB 값을 씁니다.
