@@ -3,8 +3,10 @@ package com.unify.onyak.domain.wards.profile.service.impl;
 import com.unify.onyak.domain.medications.policy.WardAccessValidator;
 import com.unify.onyak.domain.medications.policy.WardAccessValidator.Access;
 import com.unify.onyak.domain.users.auth.entity.Gender;
+import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.users.profile.error.exception.InvalidPregnancy;
 import com.unify.onyak.domain.wards.auth.entity.Ward;
+import com.unify.onyak.domain.wards.error.exception.GuardianRoleRequiredException;
 import com.unify.onyak.domain.wards.profile.dto.request.WardProfileEditRequest;
 import com.unify.onyak.domain.wards.profile.dto.response.WardProfileEditResponse;
 import com.unify.onyak.domain.wards.profile.service.WardProfileEditService;
@@ -23,6 +25,10 @@ public class WardProfileEditServiceImpl implements WardProfileEditService {
     @Transactional
     @Override
     public WardProfileEditResponse editWardProfile(long wardId, CustomUserDetails userDetails, WardProfileEditRequest request) {
+        if (!Role.GUARDIAN.name().equals(userDetails.getRoleName())) {
+            throw new GuardianRoleRequiredException();
+        }
+
         Ward ward = wardAccessValidator.validate(userDetails, wardId, Access.GUARDIAN_ONLY);
         Gender finalGender = request.gender() != null ? request.gender() : ward.getGender();
         if (finalGender == Gender.M && Boolean.TRUE.equals(request.isPregnant())) throw new InvalidPregnancy();

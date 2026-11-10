@@ -134,7 +134,7 @@ class WardProfileEditServiceImplTest {
                 ward.getIsPregnant()
         );
 
-        mockMvc.perform(patch("/wards/" + ward.getId() + 1)
+        mockMvc.perform(patch("/wards/" + (ward.getId() + 1))
                         .with(csrf())
                         .with(user(guardianDetails))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -159,6 +159,34 @@ class WardProfileEditServiceImplTest {
         mockMvc.perform(patch("/wards/" + ward.getId())
                         .with(csrf())
                         .with(user(wardDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("다른 보호자의 피보호자 프로필 수정 시 403")
+    void editAnotherGuardiansWardProfile() throws Exception {
+        guardian();
+        User otherGuardian = User.createLocal(
+                "other-guardian@test.com",
+                "tempHash",
+                "other guardian",
+                "010-0000-0001",
+                LocalDate.of(2000, 1, 1), 60.5f, 170.0f,
+                Gender.M,
+                null,
+                true,
+                true,
+                true);
+        userRepository.save(otherGuardian);
+        Ward otherWard = ward(otherGuardian);
+        WardProfileEditRequest request = new WardProfileEditRequest(
+                "Changed", null, null, null, null);
+
+        mockMvc.perform(patch("/wards/" + otherWard.getId())
+                        .with(csrf())
+                        .with(user(guardianDetails))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());

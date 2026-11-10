@@ -3,6 +3,7 @@ package com.unify.onyak.domain.wards.profile;
 import com.unify.onyak.domain.wards.profile.controller.WardProfileController;
 import com.unify.onyak.domain.wards.profile.dto.response.WardDetailResponse;
 import com.unify.onyak.domain.wards.profile.dto.response.WardListResponse;
+import com.unify.onyak.domain.wards.profile.service.WardProfileEditService;
 import com.unify.onyak.domain.wards.profile.service.WardProfileService;
 import com.unify.onyak.global.config.SecurityConfig;
 import com.unify.onyak.global.jwt.JwtAuthenticationEntryPoint;
@@ -37,6 +38,9 @@ class WardProfileControllerTest {
 
     @MockitoBean
     WardProfileService wardProfileService;
+
+    @MockitoBean
+    WardProfileEditService wardProfileEditService;
 
     @MockitoBean
     JwtProvider jwtProvider;
