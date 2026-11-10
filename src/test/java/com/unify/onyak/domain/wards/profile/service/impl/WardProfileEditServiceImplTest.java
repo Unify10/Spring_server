@@ -50,6 +50,7 @@ class WardProfileEditServiceImplTest {
                 60.5f,
                 170.0f,
                 Gender.M,
+                null,
                 true,
                 true,
                 true
@@ -101,7 +102,7 @@ class WardProfileEditServiceImplTest {
                 "Changed",
                 70.3f,
                 175.3f,
-                ward.getGender().toString(),
+                ward.getGender(),
                 ward.getIsPregnant()
         );
 
@@ -129,7 +130,7 @@ class WardProfileEditServiceImplTest {
                 "Changed",
                 70.3f,
                 175.3f,
-                ward.getGender().toString(),
+                ward.getGender(),
                 ward.getIsPregnant()
         );
 
@@ -142,7 +143,7 @@ class WardProfileEditServiceImplTest {
     }
 
     @Test
-    @DisplayName("피보호자가 피보호자의 프로필 수정 시 401")
+    @DisplayName("피보호자가 피보호자의 프로필 수정 시 403")
     void editWardProfileWrongId() throws Exception {
         User guardian = guardian();
         Ward ward = ward(guardian);
@@ -151,7 +152,7 @@ class WardProfileEditServiceImplTest {
                 "Changed",
                 70.3f,
                 175.3f,
-                ward.getGender().toString(),
+                ward.getGender(),
                 ward.getIsPregnant()
         );
 
@@ -160,6 +161,6 @@ class WardProfileEditServiceImplTest {
                         .with(user(wardDetails))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 }

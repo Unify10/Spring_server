@@ -1,6 +1,5 @@
 package com.unify.onyak.domain.wards.profile.controller;
 
-import com.unify.onyak.domain.users.auth.entity.Role;
 import com.unify.onyak.domain.wards.profile.dto.request.WardProfileEditRequest;
 import com.unify.onyak.domain.wards.profile.dto.response.WardDetailResponse;
 import com.unify.onyak.domain.wards.profile.dto.response.WardListResponse;
@@ -31,8 +30,7 @@ public class WardProfileController {
             @RequestBody @Valid WardProfileEditRequest request) {
         return ApiResponse.ok(wardProfileEditService.editWardProfile(
                 wardId,
-                guardianUserDetails.getUserId(),
-                Role.valueOf(guardianUserDetails.getRoleName()),
+                guardianUserDetails,
                 request));
     }
 
