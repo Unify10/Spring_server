@@ -64,4 +64,20 @@ public class Ward extends BaseTimeEntity {
                 sosPushEnabled
         );
     }
+
+    public void updateInformation(
+            String name,
+            Float weight,
+            Float height,
+            Gender gender,
+            Boolean isPregnant
+    )
+    {
+        if(name != null) this.name = name;
+        if(weight != null) this.weight = weight;
+        if(height != null) this.height = height;
+        if(gender != null) this.gender = gender;
+        if (this.gender == Gender.M) this.isPregnant = false;
+        else if(isPregnant != null) this.isPregnant = isPregnant;
+    }
 }
