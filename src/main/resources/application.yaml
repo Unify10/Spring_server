@@ -1,3 +1,58 @@
 spring:
   application:
     name: onyak
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:onyak}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  servlet:
+    multipart:
+      # 약 포장 사진 (/drugs/ocr, /drugs/analyze). 폰 카메라 원본이 수 MB 라 기본값 1MB 로는 막힌다
+      max-file-size: 10MB
+      max-request-size: 11MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+fastapi:
+  # Python_server(FastAPI) — 의약품 원장·DUR 판정 (약장 담기, 근거 카드에서 호출)
+  base-url: ${FASTAPI_BASE_URL:http://localhost:8000}
+cors:
+  allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+jwt:
+  # openssl rand -base64 64 사용
+  secret: ${JWT_SECRET}
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000
+app:
+  info:
+    version: "1.0.0"
+    notice-url: "https://onyak.app/notice"
+    terms-url: "https://onyak.app/terms"
+    privacy-url: "https://onyak.app/privacy"
+google:
+  client-ids: ${GOOGLE_CLIENT_ID:}
+server:
+  forward-headers-strategy: framework
