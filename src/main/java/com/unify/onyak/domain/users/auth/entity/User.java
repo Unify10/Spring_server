@@ -130,4 +130,9 @@ public class User extends BaseTimeEntity {
         if(phone != null) this.phone = phone;
         if(passwordHash != null) this.passwordHash = passwordHash;
     }
+
+    // 비밀번호 재설정 (로그인 전, 이메일 인증 후)
+    public void resetPassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }
