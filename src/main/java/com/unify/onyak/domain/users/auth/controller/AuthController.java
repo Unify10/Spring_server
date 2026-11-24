@@ -15,6 +15,8 @@ import com.unify.onyak.domain.users.auth.dto.response.TokenResponse;
 import com.unify.onyak.domain.users.auth.dto.request.GoogleLoginRequest;
 import com.unify.onyak.domain.users.auth.dto.response.GoogleLoginResponse;
 import com.unify.onyak.domain.users.auth.service.GoogleLoginService;
+import com.unify.onyak.domain.users.auth.dto.request.PasswordResetRequest;
+import com.unify.onyak.domain.users.auth.service.PasswordResetService;
 import com.unify.onyak.global.response.ApiResponse;
 import com.unify.onyak.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -36,6 +38,8 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
 
     private final GoogleLoginService googleLoginService;
+
+    private final PasswordResetService passwordResetService;
 
     // 회원가입
     @PostMapping("/signup")
@@ -76,6 +80,27 @@ public class AuthController {
             return ApiResponse.created(response);
         }
         return ApiResponse.ok(response);
+    }
+
+    // 비밀번호 재설정 1단계: 인증코드 메일 발송 (가입 여부와 상관없이 항상 성공 응답)
+    @PostMapping("/password/reset/send")
+    public ApiResponse<Void> sendPasswordResetCode(@RequestBody @Valid EmailSendRequest request) {
+        passwordResetService.sendCode(request.email());
+        return ApiResponse.ok(null);
+    }
+
+    // 비밀번호 재설정 2단계: 인증코드 확인
+    @PostMapping("/password/reset/verify")
+    public ApiResponse<Void> verifyPasswordResetCode(@RequestBody @Valid EmailVerifyRequest request) {
+        passwordResetService.verifyCode(request.email(), request.code());
+        return ApiResponse.ok(null);
+    }
+
+    // 비밀번호 재설정 3단계: 새 비밀번호 저장
+    @PostMapping("/password/reset")
+    public ApiResponse<Void> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+        passwordResetService.resetPassword(request);
+        return ApiResponse.ok(null);
     }
 
     //로그아웃 기능
