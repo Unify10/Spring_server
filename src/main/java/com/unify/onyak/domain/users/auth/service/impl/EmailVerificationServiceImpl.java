@@ -41,7 +41,12 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
 
     @Override
     public void verifyCode(String email, String code) {
-        if (!emailVerificationRepository.existsByEmailAndCode(email, code)) {
+        // email 은 @Id 라 보조 색인이 없다. 파생 쿼리(existsByEmailAndCode)는 항상 false 가 되므로
+        // id 로 직접 조회한 뒤 코드를 비교한다.
+        EmailVerification stored = emailVerificationRepository.findById(email)
+                .orElseThrow(EmailCodeMismatchException::new);
+
+        if (!stored.getCode().equals(code)) {
             throw new EmailCodeMismatchException();
         }
 
