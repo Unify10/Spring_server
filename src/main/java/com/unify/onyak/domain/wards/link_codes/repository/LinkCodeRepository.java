@@ -31,6 +31,19 @@ public interface LinkCodeRepository extends JpaRepository<LinkCode,Long> {
             @Param("expiredStatus") LinkCodeStatus expiredStatus
     );
 
+    // 재발급 전, 이 피보호자에게 남아 있는 PENDING 코드를 만료 시각과 상관없이 모두 만료시킨다
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    UPDATE LinkCode l
+    SET l.status = :expiredStatus
+    WHERE l.wardId.id = :wardId
+      AND l.status = :pendingStatus
+""") int expirePendingCodesOfWard(
+            @Param("wardId") Long wardId,
+            @Param("pendingStatus") LinkCodeStatus pendingStatus,
+            @Param("expiredStatus") LinkCodeStatus expiredStatus
+    );
+
     @Modifying
     @Query(value = """
             INSERT INTO link_codes (ward_id, code, qr_token, status, expires_at, created_at)

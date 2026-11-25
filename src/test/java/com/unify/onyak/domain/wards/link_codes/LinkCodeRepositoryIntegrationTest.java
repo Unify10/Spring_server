@@ -19,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -101,5 +102,33 @@ class LinkCodeRepositoryIntegrationTest {
 
         assertEquals(1, firstInserted);
         assertEquals(1, secondInserted);
+    }
+
+    @Test
+    void 재발급용_만료_쿼리는_해당_피보호자의_PENDING_코드만_만료시킨다() {
+        Ward otherWard = wardRepository.saveAndFlush(Ward.createLocal(
+                ward.getGuardianId(),
+                "다른 피보호자",
+                LocalDate.of(2012, 1, 1),
+                40.0f,
+                150.0f,
+                Gender.M,
+                false,
+                true,
+                true
+        ));
+        OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(5);
+        linkCodeRepository.insertIfCodeAvailable(ward.getId(), "111111", UUID.randomUUID().toString(), expiresAt);
+        linkCodeRepository.insertIfCodeAvailable(otherWard.getId(), "222222", UUID.randomUUID().toString(), expiresAt);
+
+        int expired = linkCodeRepository.expirePendingCodesOfWard(
+                ward.getId(), LinkCodeStatus.PENDING, LinkCodeStatus.EXPIRED
+        );
+
+        assertEquals(1, expired);
+        assertTrue(linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(
+                "111111", LinkCodeStatus.PENDING, OffsetDateTime.now()).isEmpty());
+        assertTrue(linkCodeRepository.findByCodeAndStatusAndExpiresAtAfter(
+                "222222", LinkCodeStatus.PENDING, OffsetDateTime.now()).isPresent());
     }
 }
