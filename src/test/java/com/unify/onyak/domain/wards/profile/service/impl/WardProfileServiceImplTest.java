@@ -92,6 +92,32 @@ class WardProfileServiceImplTest {
                 () -> wardProfileService.getWard(guardianDetails(1L), 999L));
     }
 
+    @Test
+    void 피보호자는_본인_상세정보를_조회한다() {
+        User guardian = guardian(1L);
+        Ward ward = ward(10L, guardian, "홍길동");
+        when(wardRepository.findById(10L)).thenReturn(Optional.of(ward));
+
+        WardDetailResponse response = wardProfileService.getWard(wardDetails(10L), 10L);
+
+        assertEquals(10L, response.wardId());
+        assertEquals("홍길동", response.name());
+    }
+
+    @Test
+    void 피보호자는_다른_피보호자_상세정보를_조회할_수_없다() {
+        User guardian = guardian(1L);
+        Ward other = ward(11L, guardian, "김철수");
+        when(wardRepository.findById(11L)).thenReturn(Optional.of(other));
+
+        assertThrows(WardAccessDeniedException.class,
+                () -> wardProfileService.getWard(wardDetails(10L), 11L));
+    }
+
+    private CustomUserDetails wardDetails(Long wardId) {
+        return new CustomUserDetails(wardId, "ward", null, "ROLE_WARD");
+    }
+
     private CustomUserDetails guardianDetails(Long userId) {
         return new CustomUserDetails(userId, "guardian", null, "ROLE_GUARDIAN");
     }
