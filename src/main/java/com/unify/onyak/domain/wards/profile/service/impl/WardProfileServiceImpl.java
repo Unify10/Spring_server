@@ -37,9 +37,8 @@ public class WardProfileServiceImpl implements WardProfileService {
 
     @Override
     public WardDetailResponse getWard(CustomUserDetails userDetails, Long wardId) {
-        validateGuardian(userDetails);
-
-        Ward ward = wardAccessValidator.validate(userDetails, wardId, Access.GUARDIAN_ONLY);
+        // 보호자는 자기 피보호자, 피보호자는 본인(토큰 userId == wardId)만 조회할 수 있다
+        Ward ward = wardAccessValidator.validate(userDetails, wardId, Access.WARD_OR_GUARDIAN);
 
         return WardDetailResponse.from(ward);
     }
